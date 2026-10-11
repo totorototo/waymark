@@ -1,0 +1,7 @@
+// The app's mark, on a 64 grid: a map pin, its head the arch of a badge, holding a speech
+// bubble, over low-poly mountains. Traced from the logo mockup; the arch, the bubble and its
+// dots are true circles round one centre (32, 23.6). One path, filled even-odd: each hole
+// (the pin's inside, the mountains' facets) is a subpath, so the mark is one colour and shows
+// whatever is under it. Drawn by the masthead (Setup.jsx) and scripts/make-icons.mjs.
+export const MARK_PATH =
+  "M12.5 23.7A19.5 19.5 0 1 1 51.5 23.7L51.5 59Q51.5 60 50.5 60L13.5 60Q12.5 60 12.5 59ZM49.2 23.6A17.2 17.2 0 1 0 14.8 23.6L14.8 25.9L15.5 28.8L17.9 33.8L23.2 40.7L31.9 49.2L35.1 46.6L39.5 42.2L45.4 34.9L48.3 29.4L49.2 26ZM30.9 34A10.5 10.5 0 1 1 39.2 31.2L39.4 31.5L36.4 34.5L31.1 38ZM23.8 23.6a8.2 8.2 0 1 0 16.4 0a8.2 8.2 0 1 0 -16.4 0ZM26.4 23.6a1.4 1.4 0 1 0 2.8 0a1.4 1.4 0 1 0 -2.8 0ZM30.6 23.6a1.4 1.4 0 1 0 2.8 0a1.4 1.4 0 1 0 -2.8 0ZM34.8 23.6a1.4 1.4 0 1 0 2.8 0a1.4 1.4 0 1 0 -2.8 0ZM14.8 32.9L14.8 43.2L17.6 41L21.8 45.6L22.5 43.3L18.6 38.9ZM49.2 33L45.8 38.4L42.5 42.2L43.9 44L47.3 40.5L49.2 42ZM47.5 43.7L45.6 45.8L49.2 49.4L49.2 45ZM17.3 44.2L15.3 46L20.3 47.8ZM40.7 44.2L37.1 47.8L41.1 50.4L43.7 47.9L43.9 47.2ZM24.5 45.4L22.8 49.7L25.8 52.8L26.3 52.8L29.9 50.5ZM14.8 48.2L14.8 54.5L20.1 50.5L19.5 49.9ZM35.3 49.4L32.9 51.6L27.7 54.5L30.5 57.6L34.1 57.7L39.3 52.3ZM22 52.1L19.9 57.7L27.3 57.7Z";
