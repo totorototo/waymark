@@ -35,11 +35,12 @@ npm run test:zig                              # waymark.zig against the fixture
 npm run test:run                              # unit tests (Zig mocked)
 npm run build
 node scripts/check-wasm.mjs zig/testdata/route.gpx   # the real WASM boundary
+npm run e2e                                   # Playwright: builds, then the app in Chromium
 ```
 
 ## Deploy
 
-Pushes to `main` run the checks and deploy `dist/` to Netlify
+Pushes to `main` run the checks and the Playwright tests, then deploy `dist/` to Netlify
 (`.github/workflows/deploy.yml`); pull requests run the checks only. Repo secrets:
 `VITE_MAPBOX_KEY` (restrict it to the site's URL in Mapbox), `NETLIFY_AUTH_TOKEN`,
 `NETLIFY_SITE_ID`.

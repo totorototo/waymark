@@ -2,8 +2,8 @@ name: Deploy to Netlify
 
 # As Retrace's: Zig tests, lint, formatting, unit tests, a production build and the real WASM
 # boundary (the built worker run in Node against the synthetic fixture), then deploy dist/ to
-# Netlify. Pull requests run the checks only. No e2e or Lighthouse jobs yet: waymark has
-# neither set up.
+# Netlify once the Playwright tests pass on that build. Pull requests run the checks only.
+# No Lighthouse job yet.
 on:
   push:
     branches:
@@ -72,10 +72,68 @@ jobs:
           path: dist/
           retention-days: 1
 
+  # The built dist/ in real Chromium: the WASM worker, the panels, the agent's tools and the
+  # downloads. The map is not tested (Mapbox is blocked in the specs).
+  e2e:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+
+      - name: Cache node_modules
+        uses: actions/cache@v5
+        id: cache-node-modules
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v5
+        id: cache-playwright
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright Chromium
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      # A cached browser still needs the runner's system libraries.
+      - name: Install Playwright system dependencies
+        if: steps.cache-playwright.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: dist
+          path: dist/
+
+      - name: Run E2E tests
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
   deploy:
     # From main, pushed or run by hand; never from a pull request.
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: build
+    needs: [build, e2e]
     runs-on: ubuntu-latest
     steps:
       # netlify.toml (headers, CSP, publish dir) comes from the checkout.

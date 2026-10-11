@@ -1,0 +1,39 @@
+import { expect, test } from "@playwright/test";
+
+import { fixture, offline, readDownload } from "./helpers.js";
+
+test.beforeEach(({ page }) => offline(page));
+
+test("opens a GPX, plans it, and exports it", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByText(/Open the race director's GPX/)).toBeVisible();
+
+  await page.getByTestId("file-input").setInputFiles(fixture);
+  await expect(page.getByText("route.gpx", { exact: true })).toBeVisible();
+  // The file's waypoints, matched to the track by gpxz, are the pins.
+  await expect(page.getByRole("heading", { name: "Pins (3)" })).toBeVisible();
+  const plan = page.getByRole("region", { name: "Plan" });
+  for (const name of ["Start", "Refuge", "Finish"]) {
+    await expect(plan.getByRole("rowheader", { name, exact: true })).toBeVisible();
+  }
+  await expect(plan.getByRole("rowheader", { name: "Refuge → Finish" })).toBeVisible();
+
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: "Export GPX" }).click(),
+  ]);
+  expect(download.suggestedFilename()).toBe("route-edited.gpx");
+  const text = await readDownload(download);
+  expect(text.match(/<wpt /g)).toHaveLength(3);
+  expect(text).toContain("<trkpt");
+});
+
+test("a file gpxz cannot read shows its error", async ({ page }) => {
+  await page.goto("/");
+  await page.getByTestId("file-input").setInputFiles({
+    name: "broken.gpx",
+    mimeType: "application/gpx+xml",
+    buffer: Buffer.from("<gpx><trk>"),
+  });
+  await expect(page.getByRole("alert")).toContainText("This file could not be read");
+});

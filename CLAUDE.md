@@ -31,7 +31,9 @@ Zigar, react-map-gl/Mapbox.
 
 - Only the worker imports `.zig` files. Unit tests mock them; vitest.config.js stubs `.zig`
   loads so Vitest never compiles Zig. The real boundary is `scripts/check-wasm.mjs`: it runs
-  the built worker in Node (`npm run build` first).
+  the built worker in Node (`npm run build` first). `e2e/` (Playwright, `npm run e2e`) runs
+  the built app in Chromium, Mapbox blocked; agent tools through a stand-in
+  `document.modelContext`.
 - The map is Mapbox only (`VITE_MAPBOX_KEY`, see `.env.example`); there is no fallback map.
 - Agent tools (WebMCP, `src/agent/webmcp.js`) are `load_gpx`, `review_plan`, `download_gpx`
   and the store's checkpoints-by-value actions (`src/gpx/checkpoints.js`), nothing more. A

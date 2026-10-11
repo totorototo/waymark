@@ -14,7 +14,8 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:zig": "cd zig && zig build test --summary all",
-    "test:all": "npm run test:zig && npm run test:run"
+    "test:all": "npm run test:zig && npm run test:run",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@styled-icons/feather": "10.47.0",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@eslint/js": "9.39.1",
+    "@playwright/test": "1.57.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
