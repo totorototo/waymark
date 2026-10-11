@@ -1,0 +1,103 @@
+name: Deploy to Netlify
+
+# As Retrace's: Zig tests, lint, formatting, unit tests, a production build and the real WASM
+# boundary (the built worker run in Node against the synthetic fixture), then deploy dist/ to
+# Netlify. Pull requests run the checks only. No e2e or Lighthouse jobs yet: waymark has
+# neither set up.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same branch supersedes a run still in progress.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install Zig 0.17.0
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.17.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check Zig formatting
+        run: zig fmt --check zig/waymark.zig zig/build.zig zig/build.extra.zig
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npx prettier --check .
+
+      - name: Run Zig tests
+        run: npm run test:zig
+
+      - name: Run unit tests
+        run: npm run test:run
+
+      # The Mapbox token is public by design (it ships in the bundle); restrict it to the
+      # site's URL in the Mapbox account.
+      - name: Build
+        run: |
+          echo "VITE_MAPBOX_KEY=${{ secrets.VITE_MAPBOX_KEY }}" > .env
+          npm run build
+
+      - name: Check the WASM boundary
+        run: node scripts/check-wasm.mjs zig/testdata/route.gpx
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
+  deploy:
+    # From main, pushed or run by hand; never from a pull request.
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # netlify.toml (headers, CSP, publish dir) comes from the checkout.
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: dist
+          path: dist/
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
+
+      - name: Deploy to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: netlify deploy --dir=dist --prod
