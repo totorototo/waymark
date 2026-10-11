@@ -37,8 +37,9 @@ Zigar, react-map-gl/Mapbox.
 - The map is Mapbox only (`VITE_MAPBOX_KEY`, see `.env.example`); there is no fallback map.
 - Agent tools (WebMCP, `src/agent/webmcp.js`) are `load_gpx`, `review_plan`, `download_gpx`
   and the store's checkpoints-by-value actions (`src/gpx/checkpoints.js`), nothing more. A
-  file may come in (text or URL, handed to gpxz like an opened one; unsaved edits kept unless
-  the agent says the person agreed). A file goes out only as `download_gpx`: the browser's
+  file may come in as its text only (the CSP keeps the page from fetching links), handed to
+  gpxz like an opened one; unsaved edits are kept unless the agent says the person agreed.
+  A file goes out only as `download_gpx`: the browser's
   download to the person's disk (`src/utils/download.js`, as the Export button), never the
   bytes back to the agent. It is `consequentialHint`, and refuses a plan `review_plan` does
   not call ready unless `force: true`. No tool returns the file's text.

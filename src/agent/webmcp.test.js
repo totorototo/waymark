@@ -140,46 +140,22 @@ describe("load_gpx", () => {
     });
   });
 
-  it("fetches a link, named after the file", async () => {
-    const { store } = storeOver();
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValue(new Response(gpx, { status: 200 }));
-    const result = await loadTool(store).execute({
-      url: "https://example.com/races/grp%20160.gpx",
-    });
-    expect(fetchSpy.mock.calls[0][0].href).toBe("https://example.com/races/grp%20160.gpx");
-    expect(result).toMatchObject({ ok: true, file_name: "grp 160.gpx" });
-    fetchSpy.mockRestore();
-  });
-
-  it("says why a link could not be loaded", async () => {
-    const { store } = storeOver();
-    const fetchSpy = vi.spyOn(globalThis, "fetch");
-    fetchSpy.mockResolvedValueOnce(new Response("", { status: 404 }));
-    expect((await loadTool(store).execute({ url: "https://example.com/a.gpx" })).error).toMatch(
-      /answered 404/,
-    );
-    fetchSpy.mockRejectedValueOnce(new TypeError("Failed to fetch"));
-    expect((await loadTool(store).execute({ url: "https://example.com/a.gpx" })).error).toMatch(
-      /may not allow it/,
-    );
-    expect((await loadTool(store).execute({ url: "file:///etc/hosts" })).error).toMatch(
-      /Only http/,
-    );
-    fetchSpy.mockRestore();
-  });
-
-  it("wants the text or a link, one of the two, and not too big", async () => {
+  it("wants the text, not a link, and not too big", async () => {
     const { store, client } = storeOver();
     const tool = loadTool(store);
-    expect((await tool.execute({})).error).toMatch(/one of the two/);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    expect((await tool.execute({})).error).toMatch(/file's text/);
+    expect((await tool.execute({ url: "https://example.com/a.gpx" })).error).toMatch(
+      /cannot fetch links/,
+    );
     expect((await tool.execute({ gpx, url: "https://example.com/a.gpx" })).error).toMatch(
-      /one of the two/,
+      /cannot fetch links/,
     );
     expect((await tool.execute({ gpx: "  " })).error).toMatch(/file's text/);
     expect((await tool.execute({ gpx: "x".repeat(GPX_BYTES_MAX + 1) })).error).toMatch(/too big/);
+    expect(fetchSpy).not.toHaveBeenCalled();
     expect(client.loadTrack).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
   });
 
   it("reports what gpxz refuses", async () => {

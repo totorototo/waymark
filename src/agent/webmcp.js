@@ -55,42 +55,22 @@ const ID = {
 // A GPX bigger than this is not a race route (a 170 km trace at one point a second is ~20 MB).
 export const GPX_BYTES_MAX = 50 * 1024 * 1024;
 
-// The bytes of the GPX that `input` names, { name, buffer } or { error }: its text, or a URL
-// the page fetches (the host must allow it: CORS).
+// The bytes of the GPX in `input`, { name, buffer } or { error }: its text only.
+// why no link: the page's CSP (netlify.toml, connect-src) lets it reach only itself and
+// Mapbox, and opening it wider would let any injected script send data anywhere. The agent
+// fetches the file and passes its text.
 // why no file picker: Chrome opens one only on a click by the person, and a tool call is not.
-async function gpxFromInput({ gpx, url, file_name }) {
-  if ((gpx === undefined) === (url === undefined)) {
-    return { error: "Give the file's text (gpx) or a link to it (url), one of the two." };
-  }
-  if (gpx !== undefined) {
-    if (typeof gpx !== "string" || gpx.trim() === "")
-      return { error: "gpx must be the file's text." };
-    const bytes = new TextEncoder().encode(gpx);
-    if (bytes.length > GPX_BYTES_MAX) return { error: "The file is too big for a route." };
-    return { name: file_name || "route.gpx", buffer: bytes.buffer };
-  }
-  let address;
-  try {
-    address = new URL(url, globalThis.location?.href);
-  } catch {
-    return { error: `"${url}" is not a link.` };
-  }
-  if (address.protocol !== "https:" && address.protocol !== "http:") {
-    return { error: "Only http and https links can be loaded." };
-  }
-  try {
-    const response = await fetch(address);
-    if (!response.ok) return { error: `${address} answered ${response.status}.` };
-    const buffer = await response.arrayBuffer();
-    if (buffer.byteLength > GPX_BYTES_MAX) return { error: "The file is too big for a route." };
-    const name = file_name || decodeURIComponent(address.pathname.split("/").pop()) || "route.gpx";
-    return { name, buffer };
-  } catch (err) {
-    // A host that does not allow other sites to read its files fails here, without a status.
+function gpxFromInput({ gpx, url, file_name }) {
+  if (url !== undefined) {
     return {
-      error: `${address} could not be fetched (${err.message}): the host may not allow it.`,
+      error: "The page cannot fetch links: fetch the file yourself and pass its text (gpx).",
     };
   }
+  if (typeof gpx !== "string" || gpx.trim() === "")
+    return { error: "gpx must be the file's text." };
+  const bytes = new TextEncoder().encode(gpx);
+  if (bytes.length > GPX_BYTES_MAX) return { error: "The file is too big for a route." };
+  return { name: file_name || "route.gpx", buffer: bytes.buffer };
 }
 
 // Opens a GPX as the person would, then lists what it holds. Refuses to drop unsaved edits
@@ -105,7 +85,7 @@ async function loadGpx(store, input = {}) {
         "with discard_unsaved: true if they agree to lose them.",
     };
   }
-  const file = await gpxFromInput(input);
+  const file = gpxFromInput(input);
   if (file.error) return { ok: false, error: file.error };
   await store.getState().loadBuffer(file.name, file.buffer);
   const state = store.getState();
@@ -159,17 +139,14 @@ export function checkpointTools(store, { save = download } = {}) {
       name: "load_gpx",
       title: "Open a GPX",
       description:
-        "Opens a race's GPX in the editor, from its text or from a link, in place of the open " +
-        "route, and lists its checkpoints. The person can also open one with the Open GPX " +
-        "button. The file's existing waypoints become the checkpoints.",
+        "Opens a race's GPX in the editor from its text, in place of the open route, and lists " +
+        "its checkpoints. The page cannot fetch links: fetch the file and pass its text. The " +
+        "person can also open one with the Open GPX button. The file's existing waypoints " +
+        "become the checkpoints.",
       inputSchema: {
         type: "object",
         properties: {
           gpx: { type: "string", description: "The whole GPX file, as text." },
-          url: {
-            type: "string",
-            description: "A link to the GPX. The host must allow the page to fetch it (CORS).",
-          },
           file_name: {
             type: "string",
             description: "The name to show and to base the export's name on.",
@@ -179,7 +156,7 @@ export function checkpointTools(store, { save = download } = {}) {
             description: "Drop the open route's unsaved edits. Only with the person's agreement.",
           },
         },
-        oneOf: [{ required: ["gpx"] }, { required: ["url"] }],
+        required: ["gpx"],
       },
       // It replaces the route being edited; what it reads comes from the file.
       annotations: { consequentialHint: true, untrustedContentHint: true },

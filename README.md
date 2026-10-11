@@ -13,10 +13,10 @@ cutoff time and a stop duration, and export an extended GPX in the format Termin
 
 ## Agent tools (WebMCP)
 
-In a browser with WebMCP (Chrome 149+), an agent in the browser can load a GPX (text or
-URL), list, add, update and remove checkpoints, review the plan, and download the edited
-file. The file goes to your downloads, never back to the agent. The download is refused
-while the review reports errors, unless you ask for it anyway.
+In a browser with WebMCP (Chrome 149+), an agent in the browser can load a GPX (as text: the
+page fetches no links), list, add, update and remove checkpoints, review the plan, and
+download the edited file. The file goes to your downloads, never back to the agent. The
+download is refused while the review reports errors, unless you ask for it anyway.
 
 ## Run
 
