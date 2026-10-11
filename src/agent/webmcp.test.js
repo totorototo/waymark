@@ -31,7 +31,7 @@ async function openStore() {
 const byName = (tools) => Object.fromEntries(tools.map((tool) => [tool.name, tool]));
 
 describe("checkpointTools", () => {
-  it("offers valid names, a description and a schema for each tool, and no export", () => {
+  it("offers valid names, a description and a schema for each tool, and no tool that returns the file", () => {
     const tools = checkpointTools(createStore(() => ({})));
     expect(tools.map((tool) => tool.name)).toEqual([
       "load_gpx",
@@ -40,6 +40,7 @@ describe("checkpointTools", () => {
       "add_checkpoint",
       "update_checkpoint",
       "remove_checkpoint",
+      "download_gpx",
     ]);
     for (const tool of tools) {
       expect(tool.name).toMatch(/^[A-Za-z0-9_.-]{1,128}$/);
@@ -206,6 +207,94 @@ describe("load_gpx", () => {
   });
 });
 
+describe("download_gpx", () => {
+  const bytes = new TextEncoder().encode("<gpx>edited</gpx>");
+  const arrival = { type_name: "Arrival", distance_m: 10000 };
+
+  async function withExport() {
+    const { store, client } = await openStore();
+    client.exportGpx.mockResolvedValue(bytes);
+    const save = vi.fn();
+    const tool = byName(checkpointTools(store, { save })).download_gpx;
+    return { store, client, save, tool };
+  }
+
+  it("is consequential, and never hands the file's text to the agent", async () => {
+    const { store, tool } = await withExport();
+    expect(tool.annotations).toEqual({ consequentialHint: true });
+    await store.getState().addCheckpoint({ distance_m: 0, type_name: "Start" });
+    await store.getState().addCheckpoint(arrival);
+    const result = await tool.execute({});
+    expect(result.ok).toBe(true);
+    expect(JSON.stringify(result)).not.toContain("<gpx>");
+    expect(Object.keys(result).sort()).toEqual(["bytes", "file_name", "ok"]);
+  });
+
+  it("downloads the edited file once the plan is ready, and keeps the edits unsaved", async () => {
+    const { store, client, save, tool } = await withExport();
+    await store.getState().addCheckpoint({ distance_m: 0, type_name: "Start" });
+    await store.getState().addCheckpoint(arrival);
+    expect(store.getState().dirty).toBe(true);
+    const result = await tool.execute({});
+    expect(result).toEqual({ ok: true, file_name: "race-edited.gpx", bytes: bytes.byteLength });
+    expect(save).toHaveBeenCalledWith("race-edited.gpx", bytes);
+    expect(client.exportGpx).toHaveBeenCalledTimes(1);
+    // The browser may have blocked it: load_gpx must still ask before replacing the edits.
+    expect(store.getState().dirty).toBe(true);
+  });
+
+  it("refuses when the checkpoints change during the review", async () => {
+    const { store, save, tool } = await withExport();
+    await store.getState().addCheckpoint({ distance_m: 0, type_name: "Start" });
+    await store.getState().addCheckpoint(arrival);
+    const downloading = tool.execute({});
+    const [start] = store.getState().pins;
+    store.getState().updatePin(start.id, { name: "Moved on" });
+    const result = await downloading;
+    expect(result).toEqual({
+      ok: false,
+      error: expect.stringMatching(/changed during the review/),
+    });
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it("refuses a plan that is not ready, unless forced", async () => {
+    const { store, client, save, tool } = await withExport();
+    await store.getState().addCheckpoint({ distance_m: 5000 });
+    // gpxz cannot plan these pins: an error-level issue, so not ready.
+    client.plan.mockRejectedValue(new Error("pins out of order"));
+    const refused = await tool.execute({});
+    expect(refused.ok).toBe(false);
+    expect(refused.error).toMatch(/not ready/);
+    expect(refused.review.issues.map((issue) => issue.message)).toContain(
+      "No plan: pins out of order",
+    );
+    expect(save).not.toHaveBeenCalled();
+    expect(client.exportGpx).not.toHaveBeenCalled();
+
+    const forced = await tool.execute({ force: true });
+    expect(forced.ok).toBe(true);
+    expect(save).toHaveBeenCalledWith("race-edited.gpx", bytes);
+  });
+
+  it("answers an error, not a throw, with no route or when Zig refuses the export", async () => {
+    const noRoute = byName(
+      checkpointTools(
+        createStore(() => ({})),
+        { save: vi.fn() },
+      ),
+    ).download_gpx;
+    expect((await noRoute.execute({})).error).toMatch(/No GPX is open/);
+
+    const { store, client, save, tool } = await withExport();
+    client.exportGpx.mockRejectedValue(new Error("pin outside the world"));
+    await store.getState().addCheckpoint({ distance_m: 5000 });
+    const result = await tool.execute({ force: true });
+    expect(result).toEqual({ ok: false, error: "pin outside the world" });
+    expect(save).not.toHaveBeenCalled();
+  });
+});
+
 describe("registerWebMcp", () => {
   const store = createStore(() => ({}));
 
@@ -220,7 +309,7 @@ describe("registerWebMcp", () => {
   it("registers every tool on document.modelContext, and unregisters them by aborting", () => {
     const registerTool = vi.fn(async () => undefined);
     const unregister = registerWebMcp(store, { document: { modelContext: { registerTool } } });
-    expect(registerTool).toHaveBeenCalledTimes(6);
+    expect(registerTool).toHaveBeenCalledTimes(7);
     const { signal } = registerTool.mock.calls[0][1];
     expect(signal.aborted).toBe(false);
     unregister();
@@ -249,7 +338,7 @@ describe("registerWebMcp", () => {
       .mockResolvedValue(undefined);
     registerWebMcp(store, { document: { modelContext: { registerTool } } });
     await vi.waitFor(() => expect(warn).toHaveBeenCalledWith(expect.stringMatching(/load_gpx/)));
-    expect(registerTool).toHaveBeenCalledTimes(6);
+    expect(registerTool).toHaveBeenCalledTimes(7);
     warn.mockRestore();
   });
 });

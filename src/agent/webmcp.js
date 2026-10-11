@@ -5,11 +5,14 @@
 // The tools are the store's checkpoints-by-value actions, unchanged: same checks, same route
 // order, same errors. A tool never throws for a bad call; it answers { ok: false, error },
 // which the agent reads and can correct.
-// why no export tool: the file leaves the page only when the person clicks Export, so an
-// agent can edit the pins but never hand a file to anyone. Loading one in is a tool: the
-// file stays in the page, and gpxz reads it as it reads one the person opens.
+// The file leaves the page only as the browser's own download (download_gpx): the bytes go
+// to the person's disk, never back to the agent, and the tool is marked consequential so an
+// agent host can ask first. It refuses a plan review_plan calls not ready unless forced.
+// Loading a file in is a tool too: the file stays in the page, and gpxz reads it as it reads
+// one the person opens.
 
 import { WAYPOINT_TYPES } from "../gpx/pins.js";
+import { download } from "../utils/download.js";
 
 const FIELDS = {
   name: { type: "string", description: "The checkpoint's name, as runners will read it." },
@@ -110,9 +113,45 @@ async function loadGpx(store, input = {}) {
   return { ...state.listCheckpoints(), file_name: state.fileName };
 }
 
+// Asks the browser to save the edited GPX to the person's downloads, as the Export button
+// does. Unless forced, only the pins review_plan just called ready: an agent that skipped
+// the review does not ship a plan with a missing Arrival, nor an edit made during it.
+// The unsaved mark stays: without the person's click the browser may block the download,
+// and the page cannot tell, so load_gpx still asks before replacing these edits.
+async function downloadGpx(store, save, { force } = {}) {
+  const state = store.getState();
+  if (state.status !== "ready") return { ok: false, error: "No GPX is open: load one first." };
+  if (force !== true) {
+    const { pins } = state;
+    const review = await state.reviewPlan();
+    if (review.ok === false || review.ready !== true) {
+      return {
+        ok: false,
+        error:
+          "The plan is not ready, so nothing was downloaded. Fix what review_plan reports, " +
+          "or call again with force: true if the person wants the file as it is.",
+        review,
+      };
+    }
+    // exportFile reads the pins before its first await: what is checked here is exported.
+    if (store.getState().pins !== pins) {
+      return { ok: false, error: "The checkpoints changed during the review: call again." };
+    }
+  }
+  try {
+    const { name, bytes } = await store.getState().exportFile();
+    save(name, bytes);
+    return { ok: true, file_name: name, bytes: bytes.byteLength ?? bytes.length };
+  } catch (err) {
+    // What Zig refuses (a pin outside the world, pins out of route order).
+    return { ok: false, error: err.message };
+  }
+}
+
 // The tools, for a store made by createStore. Plain data with `execute` callbacks: what
-// registerWebMcp hands the browser, and what the tests call.
-export function checkpointTools(store) {
+// registerWebMcp hands the browser, and what the tests call. `save` is how a file reaches
+// the person's disk; tests replace it.
+export function checkpointTools(store, { save = download } = {}) {
   const state = () => store.getState();
   return [
     {
@@ -199,6 +238,28 @@ export function checkpointTools(store) {
       description: "Removes a checkpoint from the route.",
       inputSchema: { type: "object", properties: { id: ID }, required: ["id"] },
       execute: async ({ id } = {}) => state().removeCheckpoint(id),
+    },
+    {
+      name: "download_gpx",
+      title: "Download the edited GPX",
+      description:
+        "Asks the browser to save the edited GPX (the director's file with the checkpoints " +
+        "as its waypoints) to the person's downloads, named after the original with -edited. " +
+        "The file goes to their disk, not back to you; the browser may ask them first or " +
+        "block it, so ask the person whether it arrived. Call review_plan first: a plan it " +
+        "does not call ready is refused unless force is true, which only the person can ask for.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          force: {
+            type: "boolean",
+            description: "Download although review_plan reports problems. Only if the person asks.",
+          },
+        },
+      },
+      // A file written to the person's disk: the host should confirm.
+      annotations: { consequentialHint: true },
+      execute: async (input) => downloadGpx(store, save, input ?? {}),
     },
   ];
 }

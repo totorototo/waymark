@@ -4,19 +4,8 @@ import { useRef, useState } from "react";
 
 import { timeZones } from "../../gpx/time.js";
 import useStore from "../../store/store.js";
+import { download } from "../../utils/download.js";
 import style from "./Toolbar.style.js";
-
-// The browser's download of bytes it holds: a link to a Blob, clicked.
-export function download(name, bytes) {
-  const url = URL.createObjectURL(new Blob([bytes], { type: "application/gpx+xml" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = name;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-}
 
 function Toolbar({ className }) {
   const inputRef = useRef(null);
@@ -32,7 +21,7 @@ function Toolbar({ className }) {
   const onExport = async () => {
     try {
       setExportError(null);
-      const { name, bytes } = await exportFile();
+      const { name, bytes } = await exportFile({ markSaved: true });
       download(name, bytes);
     } catch (err) {
       setExportError(err.message);

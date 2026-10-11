@@ -17,7 +17,7 @@ const zoned = (epoch_s, timeZone) =>
 // The review of `pins` and the plan gpxz built from them (null if it could not, with
 // `planError`). `ready` is false while anything stops the file from meaning a race plan:
 // an error-level issue, or no plan at all. Warnings are reported but do not block, as in
-// the panel: the export never refuses.
+// the panel: the Export button never refuses; download_gpx does unless forced.
 export function planReview({ pins, plan, planError, settings, timeZone }) {
   const names = new Map(pins.map((pin) => [pin.id, pin.name]));
   const issues = validatePins(pins).map(({ level, pinId, message }) => ({
@@ -64,7 +64,7 @@ export function planReview({ pins, plan, planError, settings, timeZone }) {
       pace_to_make_it_s_per_km: slowestPace(section) && Math.round(slowestPace(section)),
     })),
     next: ready
-      ? "Ready: ask the person to check the plan and click Export GPX. No tool exports."
+      ? "Ready: ask the person to check the plan, then call download_gpx (or they click Export GPX)."
       : "Not ready: fix the errors above (update_checkpoint), then review again.",
   };
 }

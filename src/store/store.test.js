@@ -464,19 +464,30 @@ describe("store", () => {
       expect(file.name).toBe("race-edited.gpx");
     });
 
-    it("clears the unsaved mark once exported", async () => {
+    it("clears the unsaved mark only when asked to", async () => {
       await loaded();
       useStore.getState().updatePin(useStore.getState().pins[0].id, { name: "x" });
-      expect(useStore.getState().dirty).toBe(true);
       await useStore.getState().exportFile();
+      expect(useStore.getState().dirty).toBe(true);
+      await useStore.getState().exportFile({ markSaved: true });
       expect(useStore.getState().dirty).toBe(false);
+    });
+
+    it("keeps the unsaved mark for an edit made while exporting", async () => {
+      await loaded();
+      const exporting = useStore.getState().exportFile({ markSaved: true });
+      useStore.getState().updatePin(useStore.getState().pins[0].id, { name: "x" });
+      await exporting;
+      expect(useStore.getState().dirty).toBe(true);
     });
 
     it("keeps the unsaved mark when Zig refuses the pins", async () => {
       await loaded();
       useStore.getState().updatePin(useStore.getState().pins[0].id, { name: "x" });
       client.exportGpx.mockRejectedValueOnce(new Error("CoordinateInvalid"));
-      await expect(useStore.getState().exportFile()).rejects.toThrow("CoordinateInvalid");
+      await expect(useStore.getState().exportFile({ markSaved: true })).rejects.toThrow(
+        "CoordinateInvalid",
+      );
       expect(useStore.getState().dirty).toBe(true);
     });
   });

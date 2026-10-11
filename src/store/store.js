@@ -363,9 +363,12 @@ export const createStore = (getClient = createWorkerClient) => {
 
       // The edited file: the loaded one with its waypoints replaced by the pins, written by
       // gpxz. Throws what Zig refuses (a pin outside the world, pins out of route order).
-      async exportFile() {
-        const bytes = await worker().exportGpx(get().pins);
-        set({ dirty: false });
+      // `markSaved` clears the unsaved mark, if no edit came in meanwhile: only for a save
+      // the person clicked. A download the page starts on its own may be blocked unseen.
+      async exportFile({ markSaved = false } = {}) {
+        const { pins } = get();
+        const bytes = await worker().exportGpx(pins);
+        if (markSaved && get().pins === pins) set({ dirty: false });
         return { name: editedFileName(get().fileName), bytes };
       },
     };
