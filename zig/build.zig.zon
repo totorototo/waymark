@@ -1,0 +1,19 @@
+.{
+    .name = .waymark,
+    .version = "0.1.0",
+    .fingerprint = 0xc4f942f7a18f1774,
+    .minimum_zig_version = "0.17.0",
+    .dependencies = .{
+        .gpxz = .{
+            .url = "git+https://github.com/totorototo/gpxz#0961297829b71eefc02e951ab32510a1784e47bb",
+            .hash = "gpxz-0.1.0-euMO4h5fBQDC8kI04IvtfvpXjcZ4Q8KTg-AaKRIOB9c5",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "build.extra.zig",
+        "waymark.zig",
+        "testdata",
+    },
+}
