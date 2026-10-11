@@ -1,0 +1,28 @@
+# As Terminus's: GitHub Actions builds (it needs Zig), Netlify only serves dist/.
+[build]
+  command = ""
+  publish = "dist"
+
+# The CSP allows what waymark loads: its own code and WASM (Zigar compiles it at runtime,
+# hence 'wasm-unsafe-eval'; Mapbox and Zigar start workers from blob: URLs), and Mapbox's
+# tiles, styles, glyphs and telemetry. Nothing else leaves the page.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://api.mapbox.com; connect-src 'self' blob: data: https://api.mapbox.com https://events.mapbox.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# The demo race: revalidated on every load (a 304 when unchanged), so a re-scrubbed file
+# reaches everyone at once; the service worker keeps the copy for offline.
+[[headers]]
+  for = "/demo/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

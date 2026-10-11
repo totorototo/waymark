@@ -1,0 +1,25 @@
+node_modules
+dist
+.zigar-cache
+zig/.zig-cache
+zig/zig-out
+zig/zig-pkg
+test-results
+coverage
+.DS_Store
+
+# A race route is the director's file: not for this repo. The fixtures are synthetic.
+*.gpx
+!zig/testdata/*.gpx
+!src/**/fixtures/*.gpx
+
+# Claude Code per-machine settings
+.claude/settings.local.json
+
+# Local env (Mapbox token)
+.env
+.env.*
+!.env.example
+
+# Playwright MCP session logs
+.playwright-mcp

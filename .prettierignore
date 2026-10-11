@@ -1,0 +1,6 @@
+dist
+.zigar-cache
+zig/.zig-cache
+zig/zig-out
+zig/testdata
+package-lock.json

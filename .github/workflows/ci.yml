@@ -1,0 +1,59 @@
+name: CI
+
+# Zig tests, lint, formatting, unit tests, a production build, and the real WASM boundary
+# (the built worker run in Node against the synthetic fixture).
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install Zig 0.17.0
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.17.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check Zig formatting
+        run: zig fmt --check zig/waymark.zig zig/build.zig zig/build.extra.zig
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npx prettier --check .
+
+      - name: Run Zig tests
+        run: npm run test:zig
+
+      - name: Run unit tests
+        run: npm run test:run
+
+      - name: Build
+        run: npm run build
+
+      - name: Check the WASM boundary
+        run: node scripts/check-wasm.mjs zig/testdata/route.gpx
