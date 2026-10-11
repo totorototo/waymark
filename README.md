@@ -11,6 +11,13 @@ cutoff time and a stop duration, and export an extended GPX in the format Termin
 - The plan panel shows, per section, the distance, D+, the time allowed and the pace needed to
   make the cutoff, and the estimated arrival against each cutoff.
 
+## Agent tools (WebMCP)
+
+In a browser with WebMCP (Chrome 149+), an agent in the browser can load a GPX (text or
+URL), list, add, update and remove checkpoints, review the plan, and download the edited
+file. The file goes to your downloads, never back to the agent. The download is refused
+while the review reports errors, unless you ask for it anyway.
+
 ## Run
 
 Needs Node 20+, Zig 0.17.0 on the PATH, and a Mapbox token.
@@ -29,3 +36,10 @@ npm run test:run                              # unit tests (Zig mocked)
 npm run build
 node scripts/check-wasm.mjs zig/testdata/route.gpx   # the real WASM boundary
 ```
+
+## Deploy
+
+Pushes to `main` run the checks and deploy `dist/` to Netlify
+(`.github/workflows/deploy.yml`); pull requests run the checks only. Repo secrets:
+`VITE_MAPBOX_KEY` (restrict it to the site's URL in Mapbox), `NETLIFY_AUTH_TOKEN`,
+`NETLIFY_SITE_ID`.
