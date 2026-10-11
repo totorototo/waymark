@@ -115,7 +115,8 @@ async function loadGpx(store, input = {}) {
 
 // Asks the browser to save the edited GPX to the person's downloads, as the Export button
 // does. Unless forced, only the pins review_plan just called ready: an agent that skipped
-// the review does not ship a plan with a missing Arrival, nor an edit made during it.
+// the review does not ship cutoffs out of order or pins gpxz cannot plan, nor an edit made
+// during the review. Warnings (a missing Arrival) do not block, as in the Plan panel.
 // The unsaved mark stays: without the person's click the browser may block the download,
 // and the page cannot tell, so load_gpx still asks before replacing these edits.
 async function downloadGpx(store, save, { force } = {}) {
