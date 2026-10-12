@@ -1,6 +1,7 @@
 import styled from "styled-components";
 
-import { chipPrimary, textButton } from "./theme/controls.js";
+import { textButton } from "./theme/controls.js";
+import { eyebrow } from "./theme/type.js";
 
 export const Layout = styled.div`
   display: flex;
@@ -17,48 +18,91 @@ export const Layout = styled.div`
     padding: 0 1rem;
   }
 
-  /* The page before a file is open, or after one could not be read. */
+  /* The page before a file is open, or after one could not be read: Terminus's start (an
+     eyebrow, a mono title, one ledger row), on the masthead's left edge as Retrace's. */
   .start {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 0.75rem;
-    max-width: 36rem;
-    margin: clamp(2rem, 10vh, 6rem) auto 0;
-    padding: 2.5rem 1.5rem;
-    border: 2px dashed color-mix(in srgb, var(--color-text) 30%, transparent);
-    border-radius: var(--border-radius-md);
-    text-align: center;
-    transition: border-color var(--transition-fast);
+    align-items: flex-start;
+    max-width: 40rem;
+    padding: clamp(3rem, 12vh, 6rem) 0 3rem;
   }
 
-  .start.dragging {
-    border-color: var(--color-primary-text);
+  .start .eyebrow {
+    ${eyebrow}
+    margin-bottom: 1rem;
   }
 
-  .start h1 {
-    font-size: var(--font-size-medium);
+  .start .title {
+    font-family: var(--font-family-mono);
+    font-size: clamp(2.25rem, 6vw, 3.5rem);
     font-weight: var(--font-weight-bold);
+    letter-spacing: -0.04em;
+    line-height: 1;
+    max-width: 16ch;
+    margin-bottom: 1rem;
   }
 
-  .start p {
+  .start .lede {
+    max-width: 38ch;
+    margin-bottom: 2.5rem;
+    color: var(--color-text-muted);
+  }
+
+  .start .ledger {
+    width: 100%;
+    max-width: 28rem;
+    border-top: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+  }
+
+  /* The drop target, as Terminus marks it: round the ledger, not the whole page. */
+  .start.dragging .ledger {
+    outline: 2px dashed var(--color-primary);
+    outline-offset: 0.75rem;
+  }
+
+  .start .ledger-row {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    width: 100%;
+    min-height: 44px;
+    padding: 1rem 0;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+    color: var(--color-text);
+    font-family: var(--font-family-mono);
     font-size: var(--font-size-small);
-  }
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+    transition: color var(--transition-base);
+    -webkit-tap-highlight-color: transparent;
 
-  .start .primary {
-    ${chipPrimary}
-    margin-top: 0.5rem;
+    &:hover {
+      color: var(--color-primary-text);
+    }
+
+    &:active {
+      opacity: 0.7;
+    }
   }
 
   .start .drop,
-  .start .private,
-  .start .detail {
+  .start .note {
+    font-family: var(--font-family-mono);
     font-size: var(--font-size-tiny);
     color: var(--color-text-muted);
   }
 
-  .start .detail {
-    font-family: var(--font-family-mono);
+  /* Clear of the drop outline, 0.75rem out from the ledger. */
+  .start .drop {
+    margin-top: 1.25rem;
+  }
+
+  .start .note {
+    max-width: 40ch;
+    margin-top: 2rem;
   }
 
   .workspace {
@@ -132,6 +176,11 @@ export const Layout = styled.div`
   @media (max-width: 52em) {
     main {
       padding: 0 0.5rem;
+    }
+
+    /* On the masthead's edge: the toolbar keeps its 1rem gutter. */
+    .start {
+      padding-inline: 0.5rem;
     }
 
     .workspace {

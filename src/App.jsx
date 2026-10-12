@@ -83,7 +83,8 @@ export default function App() {
 
   return (
     <Layout
-      $dragging={dragging}
+      // The start page marks its ledger as the drop target; the editor, the whole page.
+      $dragging={dragging && status === "ready"}
       onDragOver={(event) => {
         event.preventDefault();
         setDragging(true);
@@ -96,23 +97,29 @@ export default function App() {
       <main>
         {status === "idle" && (
           <div className={`start${dragging ? " dragging" : ""}`}>
-            <h1>Checkpoints and cutoffs for a race&apos;s GPX</h1>
-            <p>
+            <span className="eyebrow">Checkpoints and cutoffs</span>
+            <h1 className="title">A race&apos;s GPX, pinned and timed</h1>
+            <p className="lede">
               Open the race director&apos;s GPX, pin the checkpoints on the route, set their
               cutoffs, and export the file with them.
             </p>
-            <OpenFile className="primary" />
+            <div className="ledger">
+              <OpenFile className="ledger-row" />
+            </div>
             <p className="drop">or drop the file anywhere on the page</p>
-            <p className="private">The file stays in your browser: nothing is uploaded.</p>
+            <p className="note">The file stays in your browser: nothing is uploaded.</p>
           </div>
         )}
         {status === "loading" && <LoadingSpinner label="Reading the route…" />}
         {status === "error" && (
-          <div className="start" role="alert">
-            <h1>This file could not be read</h1>
-            <p>{loadHint(error)}</p>
-            <OpenFile className="primary">Open another GPX</OpenFile>
-            <p className="detail">gpxz said: {error}</p>
+          <div className={`start${dragging ? " dragging" : ""}`} role="alert">
+            <span className="eyebrow">Open GPX</span>
+            <h1 className="title">This file could not be read</h1>
+            <p className="lede">{loadHint(error)}</p>
+            <div className="ledger">
+              <OpenFile className="ledger-row">Open another GPX</OpenFile>
+            </div>
+            <p className="note detail">gpxz said: {error}</p>
           </div>
         )}
         {status === "ready" && (
