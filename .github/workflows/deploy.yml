@@ -72,8 +72,8 @@ jobs:
           path: dist/
           retention-days: 1
 
-  # The built dist/ in real Chromium: the WASM worker, the panels, the agent's tools and the
-  # downloads. The map is not tested (Mapbox is blocked in the specs).
+  # The built dist/ in real Chromium: the WASM worker, the panels, the agent's tools, the
+  # downloads, and pins dragged on the map (Mapbox's servers are blocked: no tiles).
   e2e:
     needs: build
     runs-on: ubuntu-latest

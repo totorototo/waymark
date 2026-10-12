@@ -5,8 +5,8 @@ import { fileURLToPath } from "node:url";
 export const fixture = fileURLToPath(new URL("../zig/testdata/route.gpx", import.meta.url));
 export const fixtureText = readFileSync(fixture, "utf8");
 
-// The tests never reach Mapbox: the panels and the tools are what they check, and the map
-// has no tiles to show offline anyway.
+// The tests never reach Mapbox: no tiles and no style, but the pins are still drawn on the
+// map and can be dragged.
 export const offline = (page) =>
   page.route(/^https:\/\/[^/]*mapbox\.com\//, (route) => route.abort());
 
