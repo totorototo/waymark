@@ -48,6 +48,24 @@ export function formatClock(epochSeconds, timeZone) {
     .replace(",", "");
 }
 
+// An instant as "08:38" when it falls on the same day as `referenceEpoch` on the zone's clock,
+// else "Sun 05:00": a race plan reads in hours, with the weekday only once it rolls over.
+export function formatShortClock(epochSeconds, timeZone, referenceEpoch) {
+  if (!Number.isFinite(epochSeconds)) return "–";
+  const day = (epoch) =>
+    new Intl.DateTimeFormat("en-CA", { timeZone }).format(new Date(epoch * 1000));
+  const sameDay = Number.isFinite(referenceEpoch) && day(epochSeconds) === day(referenceEpoch);
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    weekday: sameDay ? undefined : "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  })
+    .format(new Date(epochSeconds * 1000))
+    .replace(",", "");
+}
+
 // The metres a screen pixel covers at this latitude and zoom (Web Mercator, 512 px tiles as
 // Mapbox GL uses).
 export function metersPerPixel(latitude, zoom) {

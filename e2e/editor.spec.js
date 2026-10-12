@@ -16,6 +16,7 @@ test("opens a GPX, plans it, and exports it", async ({ page }) => {
   for (const name of ["Start", "Refuge", "Finish"]) {
     await expect(plan.getByRole("rowheader", { name, exact: true })).toBeVisible();
   }
+  await plan.getByText("Sections (2)").click();
   await expect(plan.getByRole("rowheader", { name: "Refuge → Finish" })).toBeVisible();
 
   const [download] = await Promise.all([

@@ -6,6 +6,7 @@ import {
   formatDuration,
   formatKm,
   formatPace,
+  formatShortClock,
   metersPerPixel,
   parsePace,
 } from "./format.js";
@@ -38,6 +39,15 @@ describe("format", () => {
     expect(formatClock(1787281200, "Europe/Paris")).toBe("Fri 21 Aug 05:00");
     expect(formatClock(1787281200, "UTC")).toBe("Fri 21 Aug 03:00");
     expect(formatClock(null, "UTC")).toBe("–");
+  });
+
+  it("writes a clock as hours on the race's first day, with the weekday after", () => {
+    const start = 1787281200; // Fri 21 Aug 05:00 in Paris
+    expect(formatShortClock(start + 3600, "Europe/Paris", start)).toBe("06:00");
+    expect(formatShortClock(start + 24 * 3600, "Europe/Paris", start)).toBe("Sat 05:00");
+    // 23:30 UTC is already the next day in Paris.
+    expect(formatShortClock(1787268600, "Europe/Paris", 1787268600 - 3600)).toBe("01:30");
+    expect(formatShortClock(null, "UTC", start)).toBe("–");
   });
 
   it("scales the click radius with the zoom, within bounds", () => {
