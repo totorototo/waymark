@@ -1,15 +1,19 @@
 # waymark
 
 Edit a race director's GPX in the browser. Open the file, click the route to drop pins (they
-snap to the track), name them, give them a type (Start, Time barrier, Life base, Arrival), a
-cutoff time and a stop duration, and export an extended GPX in the format Terminus reads.
+snap to the track), or add them at a distance in km. Drag a pin along the route to move it.
+Name each one, give it a type (Start, Time barrier, Life base, Arrival), a cutoff time and a
+stop duration, and export an extended GPX in the format Terminus reads.
 
 - Reading, snapping, planning and writing are all done by [gpxz](https://github.com/totorototo/gpxz),
   compiled to WASM with Zigar and run in a web worker.
 - The export keeps the director's file byte for byte, and replaces its waypoints only.
 - Cutoffs are entered on the race's clock (choose the time zone) and saved as UTC.
-- The plan panel shows, per section, the distance, D+, the time allowed and the pace needed to
-  make the cutoff, and the estimated arrival against each cutoff.
+- Each pin's issues (no cutoff, a cutoff before the previous one) show on its row.
+- The plan panel shows the estimated arrival against each cutoff for a runner's pace, and,
+  folded, per section the distance, D+, the time allowed and the slowest pace that makes it.
+- A removal or a move can be undone (Undo, or Cmd/Ctrl+Z), and the page asks before unsaved
+  edits are lost to a reload or another file.
 
 ## Agent tools (WebMCP)
 
