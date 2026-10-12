@@ -1,5 +1,7 @@
 import styled from "styled-components";
 
+import { field } from "../../theme/controls.js";
+
 const style = (Component) => styled(Component)`
   h2 {
     margin-bottom: 0.5rem;
@@ -27,17 +29,7 @@ const style = (Component) => styled(Component)`
   }
 
   .pace input {
-    padding: 0.375rem 0.5rem;
-    background: var(--color-field);
-    border: 1px solid var(--color-field-border);
-    border-radius: var(--border-radius-sm);
-    color: var(--color-text);
-    font: inherit;
-    font-size: var(--font-size-small);
-  }
-
-  .pace input[aria-invalid="true"] {
-    border-color: var(--color-behind-text);
+    ${field}
   }
 
   .pace p {

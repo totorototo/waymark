@@ -1,5 +1,7 @@
 import styled from "styled-components";
 
+import { chip, chipDanger, chipPrimary } from "../../theme/controls.js";
+
 const style = (Component) => styled(Component)`
   display: flex;
   flex-wrap: wrap;
@@ -9,30 +11,13 @@ const style = (Component) => styled(Component)`
   padding: 1rem calc(1.25rem + 44px + 1rem) 1rem 1rem;
 
   button {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.5rem 0.875rem;
-    background: var(--color-surface);
-    border: 1px solid color-mix(in srgb, var(--color-text) 40%, transparent);
-    border-radius: var(--border-radius-sm);
-    color: var(--color-text);
-    font: inherit;
-    font-size: var(--font-size-small);
-    cursor: pointer;
+    ${chip}
   }
 
   /* The main action at the end of the line, wherever the line wraps. */
   button.export {
+    ${chipPrimary}
     margin-left: auto;
-    background: var(--color-button-primary);
-    border-color: var(--color-button-primary);
-    color: var(--color-on-button-primary);
-  }
-
-  button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
   }
 
   .brand {
@@ -87,8 +72,7 @@ const style = (Component) => styled(Component)`
   }
 
   .confirm .discard {
-    border-color: var(--color-accent-text);
-    color: var(--color-accent-text);
+    ${chipDanger}
   }
 
   /* A phone: Open and Export on the first line, the file's name under them. */

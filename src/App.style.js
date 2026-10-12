@@ -1,5 +1,7 @@
 import styled from "styled-components";
 
+import { chipPrimary, textButton } from "./theme/controls.js";
+
 export const Layout = styled.div`
   display: flex;
   flex-direction: column;
@@ -44,18 +46,8 @@ export const Layout = styled.div`
   }
 
   .start .primary {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
+    ${chipPrimary}
     margin-top: 0.5rem;
-    padding: 0.625rem 1.25rem;
-    background: var(--color-button-primary);
-    border: 1px solid var(--color-button-primary);
-    border-radius: var(--border-radius-sm);
-    color: var(--color-on-button-primary);
-    font: inherit;
-    font-size: var(--font-size);
-    cursor: pointer;
   }
 
   .start .drop,
@@ -123,12 +115,7 @@ export const Layout = styled.div`
   }
 
   .notice button {
-    background: none;
-    border: 0;
-    color: var(--color-primary-text);
-    font: inherit;
-    text-decoration: underline;
-    cursor: pointer;
+    ${textButton}
   }
 
   aside {

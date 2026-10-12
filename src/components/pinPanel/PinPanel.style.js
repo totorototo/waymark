@@ -1,5 +1,7 @@
 import styled from "styled-components";
 
+import { chip, chipDanger, field, textButton } from "../../theme/controls.js";
+
 const style = (Component) => styled(Component)`
   header {
     display: flex;
@@ -32,14 +34,8 @@ const style = (Component) => styled(Component)`
   }
 
   .undo button {
-    padding: 0;
-    background: none;
-    border: 0;
-    color: var(--color-primary-text);
-    font: inherit;
+    ${textButton}
     font-weight: var(--font-weight-bold);
-    text-decoration: underline;
-    cursor: pointer;
   }
 
   .issues {
@@ -144,13 +140,7 @@ const style = (Component) => styled(Component)`
   input,
   select,
   textarea {
-    padding: 0.375rem 0.5rem;
-    background: var(--color-field);
-    border: 1px solid var(--color-field-border);
-    border-radius: var(--border-radius-sm);
-    color: var(--color-text);
-    font: inherit;
-    font-size: var(--font-size-small);
+    ${field}
   }
 
   .cutoff {
@@ -178,11 +168,6 @@ const style = (Component) => styled(Component)`
     margin-bottom: 0.75rem;
   }
 
-  .clock input[aria-invalid="true"],
-  .add input[aria-invalid="true"] {
-    border-color: var(--color-behind-text);
-  }
-
   .add {
     display: flex;
     flex-wrap: wrap;
@@ -196,17 +181,7 @@ const style = (Component) => styled(Component)`
   }
 
   .add button {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.375rem 0.75rem;
-    background: var(--color-surface);
-    border: 1px solid var(--color-field-border);
-    border-radius: var(--border-radius-sm);
-    color: var(--color-text);
-    font: inherit;
-    font-size: var(--font-size-small);
-    cursor: pointer;
+    ${chip}
   }
 
   .add p {
@@ -222,30 +197,15 @@ const style = (Component) => styled(Component)`
   }
 
   .remove {
-    display: inline-flex;
-    align-items: center;
+    ${chipDanger}
     align-self: flex-start;
-    gap: 0.375rem;
-    padding: 0.375rem 0.625rem;
-    background: none;
-    border: 1px solid var(--color-accent-text);
-    border-radius: var(--border-radius-sm);
-    color: var(--color-accent-text);
-    font: inherit;
-    font-size: var(--font-size-tiny);
-    cursor: pointer;
   }
 
   /* Quiet: rare, behind a confirmation, and undoable. */
   .clear {
-    padding: 0.25rem 0;
-    background: none;
-    border: 0;
+    ${textButton}
     color: var(--color-text-muted);
-    font: inherit;
     font-size: var(--font-size-tiny);
-    text-decoration: underline;
-    cursor: pointer;
   }
 
   .clear:hover {
@@ -270,14 +230,7 @@ const style = (Component) => styled(Component)`
   }
 
   .keep {
-    padding: 0.375rem 0.625rem;
-    background: none;
-    border: 1px solid color-mix(in srgb, var(--color-text) 40%, transparent);
-    border-radius: var(--border-radius-sm);
-    color: var(--color-text);
-    font: inherit;
-    font-size: var(--font-size-tiny);
-    cursor: pointer;
+    ${chip}
   }
 `;
 
