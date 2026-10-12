@@ -91,23 +91,6 @@ const style = (Component) => styled(Component)`
     color: var(--color-accent-text);
   }
 
-  .zone {
-    display: flex;
-    flex-direction: column;
-    font-size: var(--font-size-tiny);
-    color: var(--color-text-muted);
-  }
-
-  .zone select {
-    padding: 0.375rem 0.5rem;
-    background: var(--color-surface);
-    border: 1px solid color-mix(in srgb, var(--color-text) 40%, transparent);
-    border-radius: var(--border-radius-sm);
-    color: var(--color-text);
-    font: inherit;
-    font-size: var(--font-size-small);
-  }
-
   /* A phone: Open and Export on the first line, the file's name under them. */
   @media (max-width: 52em) {
     .doc {

@@ -1,6 +1,5 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
-import { validatePins } from "../../gpx/pins.js";
 import { slowestPace } from "../../gpx/review.js";
 import useStore from "../../store/store.js";
 import {
@@ -13,17 +12,14 @@ import {
 import style from "./PlanPanel.style.js";
 
 function PlanPanel({ className }) {
-  const pins = useStore((state) => state.pins);
   const plan = useStore((state) => state.plan);
   const planError = useStore((state) => state.planError);
   const planStatus = useStore((state) => state.planStatus);
   const settings = useStore((state) => state.settings);
   const timeZone = useStore((state) => state.timeZone);
   const setPace = useStore((state) => state.setPace);
-  const selectPin = useStore((state) => state.selectPin);
   const [paceText, setPaceText] = useState(formatPace(settings.pace_base_s_per_km).split(" ")[0]);
 
-  const issues = useMemo(() => validatePins(pins), [pins]);
   const sections = plan?.sections ?? [];
   const checkpoints = plan?.plan ?? [];
 
@@ -44,22 +40,6 @@ function PlanPanel({ className }) {
           }}
         />
       </label>
-
-      {issues.length > 0 && (
-        <ul className="issues">
-          {issues.map((issue, index) => (
-            <li key={index} className={issue.level}>
-              {issue.pinId ? (
-                <button type="button" onClick={() => selectPin(issue.pinId)}>
-                  {issue.message}
-                </button>
-              ) : (
-                issue.message
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
 
       {planError && <p role="alert">The plan could not be built: {planError}</p>}
 

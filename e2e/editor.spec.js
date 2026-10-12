@@ -39,3 +39,26 @@ test("a file gpxz cannot read shows its error", async ({ page }) => {
   await expect(page.getByRole("alert")).toContainText("no track");
   await expect(page.getByRole("button", { name: "Open another GPX" })).toBeVisible();
 });
+
+test("asks before another file replaces unsaved edits", async ({ page }) => {
+  await page.goto("/");
+  await page.getByTestId("file-input").setInputFiles(fixture);
+  await expect(page.getByRole("heading", { name: "Pins (3)" })).toBeVisible();
+
+  await page.getByRole("button", { name: /Refuge/, expanded: false }).click();
+  await page.getByRole("button", { name: "Remove pin" }).click();
+  await expect(page.getByRole("heading", { name: "Pins (2)" })).toBeVisible();
+  await expect(page.getByText("Unsaved changes")).toBeVisible();
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(page.getByRole("heading", { name: "Pins (3)" })).toBeVisible();
+
+  await page.getByTestId("file-input").setInputFiles(fixture);
+  await expect(page.getByText(/Your unsaved changes to route.gpx will be lost/)).toBeVisible();
+  await page.getByRole("button", { name: "Keep editing" }).click();
+  await expect(page.getByText(/will be lost/)).toBeHidden();
+  await expect(page.getByText("Unsaved changes")).toBeVisible();
+
+  await page.getByTestId("file-input").setInputFiles(fixture);
+  await page.getByRole("button", { name: "Discard and open" }).click();
+  await expect(page.getByText("Unsaved changes")).toBeHidden();
+});

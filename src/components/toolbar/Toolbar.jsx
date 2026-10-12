@@ -1,7 +1,6 @@
 import { Download } from "@styled-icons/feather/Download";
 import { useState } from "react";
 
-import { timeZones } from "../../gpx/time.js";
 import useStore from "../../store/store.js";
 import { download } from "../../utils/download.js";
 import OpenFile from "../openFile/OpenFile.jsx";
@@ -12,8 +11,6 @@ function Toolbar({ className }) {
   const status = useStore((state) => state.status);
   const fileName = useStore((state) => state.fileName);
   const dirty = useStore((state) => state.dirty);
-  const timeZone = useStore((state) => state.timeZone);
-  const setTimeZone = useStore((state) => state.setTimeZone);
   const pendingFile = useStore((state) => state.pendingFile);
   const confirmOpen = useStore((state) => state.confirmOpen);
   const cancelOpen = useStore((state) => state.cancelOpen);
@@ -50,16 +47,6 @@ function Toolbar({ className }) {
           {dirty && <span className="unsaved">Unsaved changes</span>}
         </span>
       )}
-      <label className="zone">
-        Race clock
-        <select value={timeZone} onChange={(event) => setTimeZone(event.target.value)}>
-          {[...new Set([timeZone, ...timeZones()])].map((zone) => (
-            <option key={zone} value={zone}>
-              {zone}
-            </option>
-          ))}
-        </select>
-      </label>
       <button type="button" className="export" disabled={status !== "ready"} onClick={onExport}>
         <Download size={16} /> Export GPX
       </button>

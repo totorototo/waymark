@@ -33,34 +33,6 @@ const style = (Component) => styled(Component)`
     font-size: var(--font-size-small);
   }
 
-  .issues {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    margin-bottom: 0.75rem;
-    list-style: none;
-    font-size: var(--font-size-tiny);
-  }
-
-  .issues li.error {
-    color: var(--color-behind-text);
-  }
-
-  .issues li.warning {
-    color: var(--color-secondary-text);
-  }
-
-  .issues button {
-    padding: 0;
-    background: none;
-    border: 0;
-    color: inherit;
-    font: inherit;
-    text-align: left;
-    text-decoration: underline;
-    cursor: pointer;
-  }
-
   table {
     width: 100%;
     margin-bottom: 1rem;
