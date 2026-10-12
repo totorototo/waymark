@@ -451,6 +451,112 @@ describe("store", () => {
     });
   });
 
+  describe("moving and undoing", () => {
+    const twoPins = async () => {
+      await loaded();
+      await useStore.getState().mapClick({ latitude: 42.05, longitude: 0, radius_m: 30 });
+      return useStore.getState().pins;
+    };
+
+    it("moves a dragged pin onto the track, keeping its fields", async () => {
+      const [, pin] = await twoPins();
+      useStore.getState().updatePin(pin.id, { name: "Col" });
+      client.snap.mockResolvedValueOnce([candidate(6000)]);
+      await useStore.getState().movePin(pin.id, { latitude: 42.06, longitude: 0, radius_m: 30 });
+      const moved = useStore.getState().pins[1];
+      expect(moved).toMatchObject({ id: pin.id, name: "Col", distance_m: 6000 });
+      expect(useStore.getState().undo.label).toBe("Moved Col");
+    });
+
+    it("takes the pass nearest where the pin was", async () => {
+      const [, pin] = await twoPins();
+      client.snap.mockResolvedValueOnce([candidate(5500), candidate(9000)]);
+      await useStore.getState().movePin(pin.id, { latitude: 42.05, longitude: 0, radius_m: 30 });
+      expect(useStore.getState().pins[1].distance_m).toBe(5500);
+    });
+
+    it("leaves a pin dropped off the route where it was", async () => {
+      const [, pin] = await twoPins();
+      client.snap.mockResolvedValueOnce([]);
+      await useStore.getState().movePin(pin.id, { latitude: 0, longitude: 0, radius_m: 30 });
+      expect(useStore.getState().pins[1].distance_m).toBe(5000);
+      expect(useStore.getState().notice).toMatch(/off the route/);
+      expect(useStore.getState().undo).toBeNull();
+    });
+
+    it("undoes a removal, with the selection", async () => {
+      const [, pin] = await twoPins();
+      useStore.getState().removePin(pin.id);
+      expect(useStore.getState().undo.label).toBe("Removed Checkpoint 1");
+      useStore.getState().undoLast();
+      const { pins, selectedId, undo } = useStore.getState();
+      expect(pins.map((other) => other.id)).toContain(pin.id);
+      expect(selectedId).toBe(pin.id);
+      expect(undo).toBeNull();
+    });
+
+    it("undoes removing every pin", async () => {
+      await twoPins();
+      await useStore.getState().clearPins();
+      expect(useStore.getState().undo.label).toBe("Removed 2 pins");
+      useStore.getState().undoLast();
+      expect(useStore.getState().pins).toHaveLength(2);
+    });
+
+    it("adds a pin at a distance, selected, to be timed next", async () => {
+      await loaded();
+      const result = await useStore.getState().addAtDistance(4000);
+      expect(result.ok).toBe(true);
+      const { pins, selectedId, addedId } = useStore.getState();
+      expect(pins.map((pin) => pin.distance_m)).toEqual([0, 4000]);
+      expect(selectedId).toBe(result.pin.id);
+      expect(addedId).toBe(result.pin.id);
+      useStore.getState().selectPin(pins[0].id);
+      expect(useStore.getState().addedId).toBeNull();
+    });
+
+    it("says why a distance cannot take a pin", async () => {
+      await loaded();
+      const result = await useStore.getState().addAtDistance(20000);
+      expect(result).toEqual({ ok: false, error: expect.stringMatching(/past the finish/) });
+      expect(useStore.getState().pins).toHaveLength(1);
+    });
+
+    it("drops the undo at the next change, so a later edit is never undone", async () => {
+      const [first, second] = await twoPins();
+      useStore.getState().removePin(second.id);
+      useStore.getState().updatePin(first.id, { name: "Depart" });
+      expect(useStore.getState().undo).toBeNull();
+    });
+  });
+
+  describe("openFile", () => {
+    const file = { name: "other.gpx", arrayBuffer: async () => GPX };
+
+    it("opens a file at once when nothing is unsaved", async () => {
+      await loaded();
+      await useStore.getState().openFile(file);
+      expect(useStore.getState().fileName).toBe("other.gpx");
+    });
+
+    it("waits for a confirmation before replacing unsaved edits", async () => {
+      await loaded();
+      useStore.getState().updatePin(useStore.getState().pins[0].id, { name: "Depart" });
+      await useStore.getState().openFile(file);
+      expect(useStore.getState().fileName).toBe("race.gpx");
+      expect(useStore.getState().pendingFile).toBe(file);
+
+      useStore.getState().cancelOpen();
+      expect(useStore.getState().pendingFile).toBeNull();
+      expect(useStore.getState().pins[0].name).toBe("Depart");
+
+      await useStore.getState().openFile(file);
+      await useStore.getState().confirmOpen();
+      expect(useStore.getState().fileName).toBe("other.gpx");
+      expect(useStore.getState().dirty).toBe(false);
+    });
+  });
+
   describe("export", () => {
     it("exports the pins, in route order, as the worker's bytes", async () => {
       await loaded();

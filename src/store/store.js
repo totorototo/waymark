@@ -76,6 +76,9 @@ export function editedFileName(fileName) {
   return `${base}-edited.gpx`;
 }
 
+// What undoLast puts back.
+const snapshot = (state, label) => ({ label, pins: state.pins, selectedId: state.selectedId });
+
 export const createStore = (getClient = createWorkerClient) => {
   let client = null;
   const worker = () => (client ??= getClient());
@@ -171,7 +174,7 @@ export const createStore = (getClient = createWorkerClient) => {
       }
 
       const { pins, pin } = apply(get().pins, checked.fields, candidate);
-      set({ pins, dirty: true, pending: null });
+      set({ pins, dirty: true, pending: null, undo: null });
       schedulePlan();
       const changed = pin ?? pins.find((other) => other.id === id);
       return { ok: true, pin: checkpointsDescribe([changed], get().timeZone)[0] };
@@ -201,11 +204,19 @@ export const createStore = (getClient = createWorkerClient) => {
 
       pins: [],
       selectedId: null,
+      // The pin the person just added, whose cutoff time the panel focuses.
+      addedId: null,
       // A click that landed on several passes of the track, waiting for the person to pick.
       pending: null,
       // A line for what the last click or export did not do.
       notice: null,
       dirty: false,
+      // The last removal or move, until the next change to the pins: { label, pins, selectedId }.
+      // why: one level, dropped by any other change: restoring a snapshot after later edits
+      // would silently undo those too.
+      undo: null,
+      // A file the person opened over unsaved edits, waiting for them to confirm.
+      pendingFile: null,
 
       settings: DEFAULT_SETTINGS,
       plan: null,
@@ -221,6 +232,8 @@ export const createStore = (getClient = createWorkerClient) => {
           notice: null,
           pending: null,
           selectedId: null,
+          undo: null,
+          pendingFile: null,
           plan: null,
           planError: null,
           planStatus: "idle",
@@ -251,7 +264,27 @@ export const createStore = (getClient = createWorkerClient) => {
         }
       },
 
-      selectPin: (selectedId) => set({ selectedId, pending: null }),
+      // A file the person opened: loaded now, or once they confirm, when it would replace
+      // unsaved edits.
+      openFile(file) {
+        const { status, dirty } = get();
+        if (status === "ready" && dirty) {
+          set({ pendingFile: file });
+          return undefined;
+        }
+        return get().loadFile(file);
+      },
+
+      confirmOpen() {
+        const file = get().pendingFile;
+        if (!file) return undefined;
+        set({ pendingFile: null });
+        return get().loadFile(file);
+      },
+
+      cancelOpen: () => set({ pendingFile: null }),
+
+      selectPin: (selectedId) => set({ selectedId, addedId: null, pending: null }),
 
       // A click on the map, `radius_m` wide: the track points it lands on. One is a pin; several
       // (an out-and-back passes the same place twice) wait for the person to choose.
@@ -277,21 +310,92 @@ export const createStore = (getClient = createWorkerClient) => {
 
       addPin(candidate) {
         const { pins, pin } = checkpointAdd(get().pins, candidate, {}, pinId());
-        set({ pins, selectedId: pin.id, pending: null, notice: null, dirty: true });
+        set({
+          pins,
+          selectedId: pin.id,
+          addedId: pin.id,
+          pending: null,
+          notice: null,
+          dirty: true,
+          undo: null,
+        });
         schedulePlan();
       },
 
+      // A pin typed in as a distance along the route, selected as a click's would be.
+      async addAtDistance(distance_m) {
+        const result = await get().addCheckpoint({ distance_m });
+        if (result.ok) set({ selectedId: result.pin.id, addedId: result.pin.id });
+        return result;
+      },
+
       updatePin(id, patch) {
-        set((state) => ({ pins: checkpointUpdate(state.pins, id, patch), dirty: true }));
+        set((state) => ({
+          pins: checkpointUpdate(state.pins, id, patch),
+          dirty: true,
+          undo: null,
+        }));
         schedulePlan();
       },
 
       removePin(id) {
-        set((state) => ({
-          pins: checkpointRemove(state.pins, id),
-          selectedId: state.selectedId === id ? null : state.selectedId,
+        set((state) => {
+          const pin = state.pins.find((other) => other.id === id);
+          return {
+            pins: checkpointRemove(state.pins, id),
+            selectedId: state.selectedId === id ? null : state.selectedId,
+            dirty: true,
+            undo: snapshot(state, `Removed ${pin?.name || "Unnamed pin"}`),
+          };
+        });
+        schedulePlan();
+      },
+
+      // A pin dragged on the map to `latitude, longitude`, snapped back onto the track within
+      // `radius_m`. Where the route passes there more than once, the pass nearest the pin's
+      // place along the route: a drag is a nudge, not a jump to the other side of the loop.
+      async movePin(id, { latitude, longitude, radius_m }) {
+        if (get().status !== "ready") return;
+        const mine = generation;
+        try {
+          const candidates = await worker().snap(latitude, longitude, radius_m);
+          if (mine !== generation) return;
+          const pin = get().pins.find((other) => other.id === id);
+          if (!pin) return;
+          if (candidates.length === 0) {
+            set({ notice: "Dropped off the route: the pin stays where it was." });
+            return;
+          }
+          const away = (candidate) => Math.abs(candidate.distance_m - pin.distance_m);
+          const nearest = candidates.reduce((best, other) =>
+            away(other) < away(best) ? other : best,
+          );
+          set((state) => ({
+            pins: checkpointUpdate(state.pins, id, {}, nearest),
+            selectedId: id,
+            pending: null,
+            notice: null,
+            dirty: true,
+            undo: snapshot(state, `Moved ${pin.name || "Unnamed pin"}`),
+          }));
+          schedulePlan();
+        } catch (err) {
+          if (mine === generation) set({ notice: err.message });
+        }
+      },
+
+      // Puts back the pins as they were before the last removal or move.
+      undoLast() {
+        const { undo } = get();
+        if (!undo) return;
+        set({
+          pins: undo.pins,
+          selectedId: undo.selectedId,
+          pending: null,
+          notice: null,
           dirty: true,
-        }));
+          undo: null,
+        });
         schedulePlan();
       },
 
@@ -351,7 +455,15 @@ export const createStore = (getClient = createWorkerClient) => {
       // A fresh start on a file whose waypoints are not ours (last year's barriers): the export
       // writes the pins in place of every <wpt>, so no pins is the file without waypoints.
       clearPins() {
-        set({ pins: [], selectedId: null, pending: null, notice: null, dirty: true });
+        const count = get().pins.length;
+        set((state) => ({
+          pins: [],
+          selectedId: null,
+          pending: null,
+          notice: null,
+          dirty: true,
+          undo: snapshot(state, count === 1 ? "Removed the pin" : `Removed ${count} pins`),
+        }));
         return schedulePlan({ immediate: true });
       },
 
