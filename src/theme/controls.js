@@ -85,8 +85,14 @@ export const field = css`
   border: 1px solid var(--color-field-border);
   border-radius: var(--border-radius-sm);
   color: var(--color-text);
-  font: inherit;
+  /* Set, not inherited: inside a label in the mono capitals (the race clock), the value
+     stays plain. */
+  font-family: var(--font-family-sansSerif);
   font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+  line-height: inherit;
+  letter-spacing: normal;
+  text-transform: none;
 
   &[aria-invalid="true"] {
     border-color: var(--color-behind-text);

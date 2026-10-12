@@ -1,6 +1,7 @@
 import styled from "styled-components";
 
 import { chip, chipDanger, chipPrimary } from "../../theme/controls.js";
+import { wordmark } from "../../theme/type.js";
 
 const style = (Component) => styled(Component)`
   display: flex;
@@ -20,12 +21,16 @@ const style = (Component) => styled(Component)`
     margin-left: auto;
   }
 
+  /* Retrace's masthead: the name level with the theme toggle, its first half dimmed. */
   .brand {
-    font-family: var(--font-family-mono);
-    font-size: var(--font-size-small);
-    font-weight: var(--font-weight-bold);
-    letter-spacing: 0.04em;
-    line-height: 44px;
+    ${wordmark}
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .brand-way {
+    color: color-mix(in srgb, var(--color-text) 70%, transparent);
   }
 
   .doc {

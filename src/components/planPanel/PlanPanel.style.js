@@ -1,18 +1,18 @@
 import styled from "styled-components";
 
 import { field } from "../../theme/controls.js";
+import { eyebrow } from "../../theme/type.js";
 
 const style = (Component) => styled(Component)`
   h2 {
+    ${eyebrow}
     margin-bottom: 0.5rem;
-    font-size: var(--font-size);
-    font-weight: var(--font-weight-bold);
   }
 
   h2 small {
-    font-size: var(--font-size-tiny);
     font-weight: var(--font-weight-medium);
-    color: var(--color-text-muted);
+    letter-spacing: normal;
+    text-transform: none;
   }
 
   .pace {

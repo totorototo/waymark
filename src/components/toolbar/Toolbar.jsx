@@ -31,7 +31,9 @@ function Toolbar({ className }) {
   if (status === "idle" || status === "error") {
     return (
       <header className={className}>
-        <span className="brand">waymark</span>
+        <span className="brand">
+          <span className="brand-way">way</span>mark
+        </span>
       </header>
     );
   }

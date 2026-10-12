@@ -1,6 +1,7 @@
 import styled from "styled-components";
 
 import { chip, chipDanger, field, textButton } from "../../theme/controls.js";
+import { eyebrow } from "../../theme/type.js";
 
 const style = (Component) => styled(Component)`
   header {
@@ -12,8 +13,7 @@ const style = (Component) => styled(Component)`
   }
 
   h2 {
-    font-size: var(--font-size);
-    font-weight: var(--font-weight-bold);
+    ${eyebrow}
   }
 
   .count {
@@ -164,7 +164,10 @@ const style = (Component) => styled(Component)`
     gap: 0.375rem;
   }
 
+  /* The route's setting, not a pin's: labelled as a section, above the pins. */
   .clock {
+    ${eyebrow}
+    gap: 0.375rem;
     margin-bottom: 0.75rem;
   }
 
