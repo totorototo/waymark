@@ -48,7 +48,5 @@ npm run e2e                                   # Playwright: builds, then the app
 
 ## Deploy
 
-Pushes to `main` run the checks and the Playwright tests, then deploy `dist/` to Netlify
-(`.github/workflows/deploy.yml`); pull requests run the checks only. Repo secrets:
-`VITE_MAPBOX_KEY` (restrict it to the site's URL in Mapbox), `NETLIFY_AUTH_TOKEN`,
-`NETLIFY_SITE_ID`.
+Netlify, from `main` (`.github/workflows/deploy.yml`). Secrets: `VITE_MAPBOX_KEY` (restrict
+it to the site's URL in Mapbox: it ships in the bundle), `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`.
