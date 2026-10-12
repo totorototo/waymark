@@ -30,12 +30,12 @@ const style = (Component) => styled(Component)`
     min-height: 44px;
   }
 
-  /* The pole starts 15 of the mark's 64 in: pulled back so it lines up with the text below. */
+  /* The pin's head starts 13 of the mark's 64 in: pulled back to line up with the text below. */
   .mark {
     flex: none;
     width: 44px;
     height: 44px;
-    margin-left: calc(-44px * 15 / 64);
+    margin-left: calc(-44px * 13 / 64);
   }
 
   /* One ink, as the favicon's: dark's primary is its gold, light's its blue. */
