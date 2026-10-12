@@ -5,20 +5,19 @@ import { Maximize2 } from "@styled-icons/feather/Maximize2";
 import { Minimize2 } from "@styled-icons/feather/Minimize2";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Layer, Map, Marker, Source } from "react-map-gl/mapbox";
-import { useTheme } from "styled-components";
 
 import useStore from "../../store/store.js";
 import { clickRadius } from "../../utils/format.js";
-import style from "./EditorMap.style.js";
+import style, { MAP_COLORS } from "./EditorMap.style.js";
 
 const MAP_STYLE = "mapbox://styles/mapbox/outdoors-v12";
 const TOKEN = import.meta.env.VITE_MAPBOX_KEY;
-const PITCH = 55;
-
-// iPhone Safari has no element Fullscreen API, so fall back to a fixed overlay in CSS.
-const hasFullscreenApi =
-  typeof document !== "undefined" &&
-  Boolean(document.fullscreenEnabled ?? document.webkitFullscreenEnabled);
+// why flat by default: pins go on a thin line, and a click on a pitched map lands on a
+// foreshortened, distorted route. 3D is a look at the terrain, one click away.
+const PITCH_3D = 55;
+const TEXT_FONT = ["DIN Pro Bold", "Arial Unicode MS Bold"];
+// Room around the route when fitting it: a pin stands 36 px above its point.
+const FIT_PADDING = { top: 64, bottom: 32, left: 48, right: 64 };
 
 // geometry.points is flat [latitude, longitude, elevation, distance] per point.
 export function routeFeature(points) {
@@ -46,63 +45,65 @@ export function routeBounds(points) {
   ];
 }
 
-const LINE_LAYOUT = { "line-join": "round", "line-cap": "round" };
+const KM_STEPS = [1, 2, 5, 10, 20, 50, 100];
+const KM_MARKS_MAX = 12;
 
-function useFullscreen(containerRef) {
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  useEffect(() => {
-    if (!hasFullscreenApi) return undefined;
-    const onChange = () => {
-      const active = document.fullscreenElement ?? document.webkitFullscreenElement;
-      setIsFullscreen(active === containerRef.current);
-    };
-    document.addEventListener("fullscreenchange", onChange);
-    document.addEventListener("webkitfullscreenchange", onChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", onChange);
-      document.removeEventListener("webkitfullscreenchange", onChange);
-    };
-  }, [containerRef]);
-
-  // The CSS fallback has no native Escape-to-exit or scroll lock: wire both by hand.
-  useEffect(() => {
-    if (hasFullscreenApi || !isFullscreen) return undefined;
-    const onKey = (event) => {
-      if (event.key === "Escape") setIsFullscreen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = overflow;
-    };
-  }, [isFullscreen]);
-
-  const toggle = useCallback(() => {
-    if (!hasFullscreenApi) {
-      setIsFullscreen((previous) => !previous);
-      return;
-    }
-    if (document.fullscreenElement ?? document.webkitFullscreenElement) {
-      (document.exitFullscreen ?? document.webkitExitFullscreen)?.call(document);
-      return;
-    }
-    const container = containerRef.current;
-    (container?.requestFullscreen ?? container?.webkitRequestFullscreen)
-      ?.call(container)
-      ?.catch(() => {});
-  }, [containerRef]);
-
-  return [isFullscreen, toggle];
+// A label every 1, 2, 5… km, as few as keep the count under KM_MARKS_MAX, each placed
+// between the two track points around its distance. Not at 0: the Start is there.
+export function kmMarks(points, distance_m) {
+  const km = distance_m / 1000;
+  const step = KM_STEPS.find((each) => km / each <= KM_MARKS_MAX) ?? KM_STEPS.at(-1);
+  const features = [];
+  let i = 4;
+  for (let mark = step; mark * 1000 < distance_m; mark += step) {
+    const target = mark * 1000;
+    while (i + 3 < points.length && points[i + 3] < target) i += 4;
+    if (i + 3 >= points.length) break;
+    const [lat0, lon0, , d0] = points.slice(i - 4, i);
+    const [lat1, lon1, , d1] = points.slice(i, i + 4);
+    const t = d1 > d0 ? (target - d0) / (d1 - d0) : 0;
+    features.push({
+      type: "Feature",
+      properties: { label: `${mark} km` },
+      geometry: {
+        type: "Point",
+        coordinates: [lon0 + (lon1 - lon0) * t, lat0 + (lat1 - lat0) * t],
+      },
+    });
+  }
+  return { type: "FeatureCollection", features };
 }
 
-// `children` are overlays (the notice) kept inside the container so fullscreen shows them.
-function EditorMap({ className, children }) {
+const LINE_LAYOUT = { "line-join": "round", "line-cap": "round" };
+const CASING_PAINT = { "line-color": MAP_COLORS.casing, "line-width": 7 };
+const LINE_PAINT = { "line-color": MAP_COLORS.route, "line-width": 4 };
+// Chevrons along the line, pointing the way the race runs.
+const ARROW_LAYOUT = {
+  "symbol-placement": "line",
+  "symbol-spacing": 90,
+  "text-field": "›",
+  "text-font": TEXT_FONT,
+  "text-size": 22,
+  "text-keep-upright": false,
+  "text-allow-overlap": true,
+};
+const ARROW_PAINT = { "text-color": MAP_COLORS.casing };
+const KM_LAYOUT = {
+  "text-field": ["get", "label"],
+  "text-font": TEXT_FONT,
+  "text-size": 11,
+  "text-offset": [0, -1.1],
+};
+const KM_PAINT = {
+  "text-color": MAP_COLORS.label,
+  "text-halo-color": MAP_COLORS.casing,
+  "text-halo-width": 1.5,
+};
+
+// `children` are overlays (the notice) kept inside the map. Fullscreen is the workspace's
+// (map and panel), toggled from here: `isFullscreen` and `onToggleFullscreen`.
+function EditorMap({ className, children, isFullscreen, onToggleFullscreen }) {
   const mapRef = useRef(null);
-  const containerRef = useRef(null);
-  const theme = useTheme();
   const geometry = useStore((state) => state.geometry);
   const pins = useStore((state) => state.pins);
   const selectedId = useStore((state) => state.selectedId);
@@ -110,16 +111,21 @@ function EditorMap({ className, children }) {
   const mapClick = useStore((state) => state.mapClick);
   const selectPin = useStore((state) => state.selectPin);
   const addPin = useStore((state) => state.addPin);
-  const [isFullscreen, toggleFullscreen] = useFullscreen(containerRef);
+  const movePin = useStore((state) => state.movePin);
+  const [tilted, setTilted] = useState(false);
+  // A Marker only moves when its props change: after a drop the store refused (off the
+  // route), redraw so the pin goes back to where the store has it.
+  const [, redraw] = useState(0);
 
   const feature = useMemo(() => routeFeature(geometry.points), [geometry]);
+  const marks = useMemo(() => kmMarks(geometry.points, geometry.distance_m), [geometry]);
 
   // fitBounds zooms out too far when the camera is pitched, so fit flat, then tilt in place.
   const fitRoute = useCallback(() => {
     const map = mapRef.current?.getMap?.();
     if (!map) return;
-    map.fitBounds(routeBounds(geometry.points), { padding: 48, duration: 0 });
-    map.easeTo({ pitch: PITCH, duration: 0 });
+    map.fitBounds(routeBounds(geometry.points), { padding: FIT_PADDING, duration: 0 });
+    map.easeTo({ pitch: map.getPitch() > 0 ? PITCH_3D : 0, duration: 0 });
   }, [geometry]);
 
   useEffect(() => {
@@ -149,9 +155,22 @@ function EditorMap({ className, children }) {
     return () => cancelAnimationFrame(id);
   }, [isFullscreen]);
 
+  const fullscreenButton = (
+    <button
+      type="button"
+      className="control fullscreen"
+      onClick={onToggleFullscreen}
+      aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen map and pins"}
+      title={isFullscreen ? "Exit fullscreen" : "Fullscreen map and pins"}
+    >
+      {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+    </button>
+  );
+
   if (!TOKEN) {
     return (
       <div className={className}>
+        {fullscreenButton}
         <p className="missing" role="alert">
           Set VITE_MAPBOX_KEY (see .env.example) to show the map.
         </p>
@@ -160,9 +179,21 @@ function EditorMap({ className, children }) {
     );
   }
 
-  // Mapbox paint takes colours, not CSS custom properties: read them from the theme.
-  const colors = theme.colors[theme.currentVariant];
-  const linePaint = { "line-color": colors["--color-primary"], "line-width": 3 };
+  const toggleTilt = () => {
+    const next = !tilted;
+    setTilted(next);
+    mapRef.current?.getMap?.().easeTo({ pitch: next ? PITCH_3D : 0, duration: 600 });
+  };
+
+  const onDragEnd = (id, event) => {
+    const map = mapRef.current?.getMap?.();
+    const { lat, lng } = event.lngLat;
+    movePin(id, {
+      latitude: lat,
+      longitude: lng,
+      radius_m: clickRadius(lat, map?.getZoom() ?? 12),
+    }).finally(() => redraw((count) => count + 1));
+  };
 
   const onClick = (event) => {
     mapClick({
@@ -173,23 +204,27 @@ function EditorMap({ className, children }) {
   };
 
   return (
-    <div ref={containerRef} className={`${className}${isFullscreen ? " is-fullscreen" : ""}`}>
-      <button
-        type="button"
-        className="fullscreen"
-        onClick={toggleFullscreen}
-        aria-label={isFullscreen ? "Exit fullscreen map" : "View map fullscreen"}
-      >
-        {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-      </button>
+    <div className={className}>
+      <div className="controls">
+        {fullscreenButton}
+        <button
+          type="button"
+          className="control tilt"
+          onClick={toggleTilt}
+          aria-pressed={tilted}
+          title={tilted ? "Flat map" : "3D terrain"}
+        >
+          3D
+        </button>
+      </div>
       <Map
         ref={mapRef}
         mapboxAccessToken={TOKEN}
         mapStyle={MAP_STYLE}
         initialViewState={{
           bounds: routeBounds(geometry.points),
-          fitBoundsOptions: { padding: 48 },
-          pitch: PITCH,
+          fitBoundsOptions: { padding: FIT_PADDING },
+          pitch: 0,
         }}
         maxPitch={70}
         onLoad={onLoad}
@@ -204,22 +239,37 @@ function EditorMap({ className, children }) {
           maxzoom={14}
         />
         <Source id="route" type="geojson" data={feature}>
-          <Layer id="route-line" type="line" layout={LINE_LAYOUT} paint={linePaint} />
+          <Layer id="route-casing" type="line" layout={LINE_LAYOUT} paint={CASING_PAINT} />
+          <Layer id="route-line" type="line" layout={LINE_LAYOUT} paint={LINE_PAINT} />
+          <Layer id="route-arrows" type="symbol" layout={ARROW_LAYOUT} paint={ARROW_PAINT} />
+        </Source>
+        <Source id="km-marks" type="geojson" data={marks}>
+          <Layer id="km-labels" type="symbol" layout={KM_LAYOUT} paint={KM_PAINT} />
         </Source>
         {pins.map((pin, index) => (
-          <Marker key={pin.id} latitude={pin.latitude} longitude={pin.longitude} anchor="bottom">
+          <Marker
+            key={pin.id}
+            latitude={pin.latitude}
+            longitude={pin.longitude}
+            anchor="bottom"
+            // Mapbox fades a marker it thinks terrain hides, even on a flat map: never a pin.
+            occludedOpacity={1}
+            draggable
+            onDragStart={() => selectPin(pin.id)}
+            onDragEnd={(event) => onDragEnd(pin.id, event)}
+          >
             <button
               type="button"
               className={`pin ${pin.id === selectedId ? "selected" : ""}`}
               aria-label={`${pin.name || "Unnamed pin"}, pin ${index + 1}`}
               aria-pressed={pin.id === selectedId}
-              title={pin.name || undefined}
+              title={`${pin.name || "Unnamed pin"}: drag along the route to move it`}
               onClick={(event) => {
                 event.stopPropagation();
                 selectPin(pin.id);
               }}
             >
-              <MapPin size={32} aria-hidden="true" />
+              <MapPin size={36} aria-hidden="true" />
               <span className="number">{index + 1}</span>
             </button>
           </Marker>
@@ -230,6 +280,7 @@ function EditorMap({ className, children }) {
             latitude={candidate.latitude}
             longitude={candidate.longitude}
             anchor="center"
+            occludedOpacity={1}
           >
             <button
               type="button"
