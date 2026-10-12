@@ -73,6 +73,11 @@ const style = (Component) => styled(Component)`
     font-size: var(--font-size-tiny);
   }
 
+  /* Before a file is open, the notice at the line's end, by the theme toggle. */
+  .brand + .update {
+    margin-left: auto;
+  }
+
   .confirm {
     display: flex;
     flex-basis: 100%;
@@ -101,6 +106,7 @@ const style = (Component) => styled(Component)`
       flex-basis: 100%;
     }
 
+    .update,
     .confirm,
     .error {
       order: 2;

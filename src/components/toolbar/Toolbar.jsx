@@ -5,6 +5,7 @@ import useStore from "../../store/store.js";
 import { MARK_PATH } from "../../theme/mark.js";
 import { download } from "../../utils/download.js";
 import OpenFile from "../openFile/OpenFile.jsx";
+import UpdateNotice from "../updateNotice/UpdateNotice.jsx";
 import style from "./Toolbar.style.js";
 
 function Toolbar({ className }) {
@@ -40,6 +41,7 @@ function Toolbar({ className }) {
             <span className="brand-way">way</span>mark
           </span>
         </span>
+        <UpdateNotice className="update" />
       </header>
     );
   }
@@ -55,6 +57,7 @@ function Toolbar({ className }) {
           {dirty && <span className="unsaved">Unsaved changes</span>}
         </span>
       )}
+      <UpdateNotice className="update" />
       <button type="button" className="export" disabled={status !== "ready"} onClick={onExport}>
         <Download size={16} /> Export GPX
       </button>

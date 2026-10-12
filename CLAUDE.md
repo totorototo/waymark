@@ -43,6 +43,10 @@ Zigar, react-map-gl/Mapbox.
   download to the person's disk (`src/utils/download.js`, as the Export button), never the
   bytes back to the agent. It is `consequentialHint`, and refuses a plan `review_plan` does
   not call ready unless `force: true`. No tool returns the file's text.
+- PWA as Retrace's (`vite-plugin-pwa`, `src/sw.js` precaches the shell, icons from
+  `scripts/make-icons.mjs`), except a new build waits for the person: the masthead offers
+  it (`UpdateNotice`) only with nothing unsaved, as the reload would drop the pins. Mapbox
+  tiles are not cached; offline, the map does not draw.
 - Design system: `src/theme/Theme.js` (from Terminus). Use the CSS custom properties.
   Component styles go in `*.style.js` next to the component.
 
