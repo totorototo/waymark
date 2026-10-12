@@ -7,11 +7,15 @@ stop duration, and export an extended GPX in the format Terminus reads.
 
 - Reading, snapping, planning and writing are all done by [gpxz](https://github.com/totorototo/gpxz),
   compiled to WASM with Zigar and run in a web worker.
+- The file stays in your browser: nothing is uploaded (the CSP lets the page reach Mapbox only).
 - The export keeps the director's file byte for byte, and replaces its waypoints only.
-- Cutoffs are entered on the race's clock (choose the time zone) and saved as UTC.
+- Cutoffs are entered on the race's clock (the time zone, above the pins) and saved as UTC.
+- The map opens flat, with a 3D button for the terrain; km labels and chevrons mark the
+  distance and the way the race runs. Fullscreen keeps the pins beside the map.
 - Each pin's issues (no cutoff, a cutoff before the previous one) show on its row.
-- The plan panel shows the estimated arrival against each cutoff for a runner's pace, and,
-  folded, per section the distance, D+, the time allowed and the slowest pace that makes it.
+- The plan panel opens on one line, the estimated finish and the tightest margin (or the
+  cutoffs missed) for a runner's pace, then the arrival against each cutoff, and, folded,
+  per section the distance, D+, the time allowed and the slowest pace that makes it.
 - A removal or a move can be undone (Undo, or Cmd/Ctrl+Z), and the page asks before unsaved
   edits are lost to a reload or another file.
 
