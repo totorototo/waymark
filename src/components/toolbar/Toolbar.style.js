@@ -26,7 +26,19 @@ const style = (Component) => styled(Component)`
     ${wordmark}
     display: flex;
     align-items: center;
+    gap: 0.625rem;
     min-height: 44px;
+  }
+
+  .mark {
+    flex: none;
+    width: 44px;
+    height: 44px;
+  }
+
+  /* One ink, as the favicon's: dark's primary is its gold, light's its blue. */
+  .mark path {
+    fill: var(--color-primary);
   }
 
   .brand-way {

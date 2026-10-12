@@ -2,6 +2,7 @@ import { Download } from "@styled-icons/feather/Download";
 import { useState } from "react";
 
 import useStore from "../../store/store.js";
+import { MARK_PATH } from "../../theme/mark.js";
 import { download } from "../../utils/download.js";
 import OpenFile from "../openFile/OpenFile.jsx";
 import style from "./Toolbar.style.js";
@@ -32,7 +33,12 @@ function Toolbar({ className }) {
     return (
       <header className={className}>
         <span className="brand">
-          <span className="brand-way">way</span>mark
+          <svg className="mark" viewBox="0 0 64 64" aria-hidden="true">
+            <path d={MARK_PATH} fillRule="evenodd" />
+          </svg>
+          <span>
+            <span className="brand-way">way</span>mark
+          </span>
         </span>
       </header>
     );
