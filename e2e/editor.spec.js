@@ -36,4 +36,6 @@ test("a file gpxz cannot read shows its error", async ({ page }) => {
     buffer: Buffer.from("<gpx><trk>"),
   });
   await expect(page.getByRole("alert")).toContainText("This file could not be read");
+  await expect(page.getByRole("alert")).toContainText("no track");
+  await expect(page.getByRole("button", { name: "Open another GPX" })).toBeVisible();
 });

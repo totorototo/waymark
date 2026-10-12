@@ -78,7 +78,7 @@ test("an agent loads a GPX, fixes a cutoff, and downloads it to the person's dis
 
   // The browser may have blocked a download nobody clicked for: the edits stay unsaved, and
   // the agent cannot load another file over them without the person's say.
-  await expect(page.getByText("race.gpx •")).toBeVisible();
+  await expect(page.getByText("Unsaved changes")).toBeVisible();
   const replaced = await call(page, "load_gpx", { gpx: fixtureText });
   expect(replaced).toEqual({ ok: false, error: expect.stringMatching(/unsaved edits/) });
 });

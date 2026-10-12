@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { registerWebMcp } from "./agent/webmcp.js";
 import { Layout } from "./App.style.js";
@@ -6,29 +6,79 @@ import EditorMap from "./components/editorMap/EditorMap.jsx";
 import ErrorBoundary from "./components/errorBoundary/ErrorBoundary.jsx";
 import Footer from "./components/footer/Footer.jsx";
 import LoadingSpinner from "./components/loadingSpinner/LoadingSpinner.jsx";
+import OpenFile from "./components/openFile/OpenFile.jsx";
 import PinPanel from "./components/pinPanel/PinPanel.jsx";
 import PlanPanel from "./components/planPanel/PlanPanel.jsx";
 import ThemeToggle from "./components/themeToggle/ThemeToggle.jsx";
 import Toolbar from "./components/toolbar/Toolbar.jsx";
+import useFullscreen from "./hooks/useFullscreen.js";
 import useStore from "./store/store.js";
+
+// What to do about a file gpxz refused, by its error name; anything else is not a GPX it
+// can read. Zigar reports the name as words ("Trace too short"): match either form.
+const LOAD_HINTS = {
+  TraceTooShort:
+    "The file has no track, or too few points to make one. Is it a route with a <trk>?",
+  ElevationMissing:
+    "The track has no elevation, which the plan needs. Export it again with elevation from the app or watch that recorded it.",
+};
+const LOAD_HINT_DEFAULT =
+  "It does not look like a GPX file with a track. Try exporting it again as GPX from the app that made it.";
+
+const squash = (text) => String(text).replace(/\s+/g, "").toLowerCase();
+
+export function loadHint(error) {
+  const known = Object.keys(LOAD_HINTS).find((name) => squash(name) === squash(error));
+  return known ? LOAD_HINTS[known] : LOAD_HINT_DEFAULT;
+}
 
 export default function App() {
   const [dragging, setDragging] = useState(false);
+  const workspaceRef = useRef(null);
+  // why the workspace, not the map: fullscreen keeps the pins beside the map, so a pin
+  // added there can be named and timed without leaving it.
+  const [isFullscreen, toggleFullscreen] = useFullscreen(workspaceRef);
   const status = useStore((state) => state.status);
   const error = useStore((state) => state.error);
   const notice = useStore((state) => state.notice);
   const pending = useStore((state) => state.pending);
   const cancelPending = useStore((state) => state.cancelPending);
-  const loadFile = useStore((state) => state.loadFile);
+  const openFile = useStore((state) => state.openFile);
+  const dirty = useStore((state) => state.dirty);
+  const undoLast = useStore((state) => state.undoLast);
 
   // The checkpoint tools for an agent in the browser, while the editor is on screen.
   useEffect(() => registerWebMcp(useStore), []);
+
+  // Closing or reloading the tab would drop the pins: the browser asks first.
+  useEffect(() => {
+    if (!dirty) return undefined;
+    const onBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
+
+  // Cmd/Ctrl+Z undoes a removal or a move, except in a field, where it undoes the typing.
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (event.key !== "z" || !(event.metaKey || event.ctrlKey) || event.shiftKey) return;
+      if (event.target.closest?.("input, textarea, select, [contenteditable]")) return;
+      if (!useStore.getState().undo) return;
+      event.preventDefault();
+      undoLast();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [undoLast]);
 
   const onDrop = (event) => {
     event.preventDefault();
     setDragging(false);
     const [file] = event.dataTransfer.files;
-    if (file) loadFile(file);
+    if (file) openFile(file);
   };
 
   return (
@@ -45,22 +95,31 @@ export default function App() {
       <Toolbar />
       <main>
         {status === "idle" && (
-          <p className="empty">
-            Open the race director&apos;s GPX (or drop it here), click the route to pin checkpoints,
-            set their cutoffs, then export.
-          </p>
+          <div className={`start${dragging ? " dragging" : ""}`}>
+            <h1>Checkpoints and cutoffs for a race&apos;s GPX</h1>
+            <p>
+              Open the race director&apos;s GPX, pin the checkpoints on the route, set their
+              cutoffs, and export the file with them.
+            </p>
+            <OpenFile className="primary" />
+            <p className="drop">or drop the file anywhere on the page</p>
+            <p className="private">The file stays in your browser: nothing is uploaded.</p>
+          </div>
         )}
         {status === "loading" && <LoadingSpinner label="Reading the route…" />}
         {status === "error" && (
-          <p role="alert" className="error">
-            This file could not be read: {error}
-          </p>
+          <div className="start" role="alert">
+            <h1>This file could not be read</h1>
+            <p>{loadHint(error)}</p>
+            <OpenFile className="primary">Open another GPX</OpenFile>
+            <p className="detail">gpxz said: {error}</p>
+          </div>
         )}
         {status === "ready" && (
-          <div className="workspace">
+          <div ref={workspaceRef} className={`workspace${isFullscreen ? " is-fullscreen" : ""}`}>
             <div className="map">
               <ErrorBoundary message="The map failed to load.">
-                <EditorMap>
+                <EditorMap isFullscreen={isFullscreen} onToggleFullscreen={toggleFullscreen}>
                   {(notice || pending) && (
                     <p className="notice" role="status">
                       {pending

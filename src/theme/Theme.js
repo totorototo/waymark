@@ -12,6 +12,13 @@ const THEME = {
       "--color-secondary-text": "#7A3509",
       "--color-accent-text": "#971143",
       "--color-success": "#16a34a",
+      // The main action's fill and label: #c4c4c4 on --color-primary is 2.1:1, read as disabled.
+      "--color-button-primary": "#2A3AA5",
+      "--color-on-button-primary": "#ffffff",
+      // Form fields: lighter than the cards they sit on, so they read as editable. On the
+      // page's grey they looked sunken, as if disabled.
+      "--color-field": "#fbfaf8",
+      "--color-field-border": "#8a8789",
     },
     dark: {
       "--color-background": "#3A3335",
@@ -25,6 +32,10 @@ const THEME = {
       "--color-surface": "#3d3b3b",
       "--color-success": "#22c55e",
       "--color-accent-text": "#f2789d",
+      "--color-button-primary": "#f2af29",
+      "--color-on-button-primary": "#3A3335",
+      "--color-field": "#2b2527",
+      "--color-field-border": "#8d8a90",
     },
   },
 

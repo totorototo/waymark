@@ -20,6 +20,12 @@ const style = (Component) => styled(Component)`
   cursor: pointer;
   transition: all var(--transition-base);
 
+  /* On a phone the map sticks to the top of the page: the toggle scrolls away with the
+     toolbar instead of sitting on the map's controls. */
+  @media (max-width: 52em) {
+    position: absolute;
+  }
+
   &:hover {
     background: color-mix(in srgb, var(--color-text) 18%, transparent);
     border-color: color-mix(in srgb, var(--color-primary) 60%, transparent);

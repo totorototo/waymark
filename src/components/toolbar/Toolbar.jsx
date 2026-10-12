@@ -1,21 +1,22 @@
 import { Download } from "@styled-icons/feather/Download";
-import { FolderPlus } from "@styled-icons/feather/FolderPlus";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import { timeZones } from "../../gpx/time.js";
 import useStore from "../../store/store.js";
 import { download } from "../../utils/download.js";
+import OpenFile from "../openFile/OpenFile.jsx";
 import style from "./Toolbar.style.js";
 
 function Toolbar({ className }) {
-  const inputRef = useRef(null);
   const [exportError, setExportError] = useState(null);
   const status = useStore((state) => state.status);
   const fileName = useStore((state) => state.fileName);
   const dirty = useStore((state) => state.dirty);
   const timeZone = useStore((state) => state.timeZone);
-  const loadFile = useStore((state) => state.loadFile);
   const setTimeZone = useStore((state) => state.setTimeZone);
+  const pendingFile = useStore((state) => state.pendingFile);
+  const confirmOpen = useStore((state) => state.confirmOpen);
+  const cancelOpen = useStore((state) => state.cancelOpen);
   const exportFile = useStore((state) => state.exportFile);
 
   const onExport = async () => {
@@ -28,27 +29,25 @@ function Toolbar({ className }) {
     }
   };
 
+  // Before a file is open, and when one could not be read, the page itself offers to open
+  // one: nothing to show here but the name.
+  if (status === "idle" || status === "error") {
+    return (
+      <header className={className}>
+        <span className="brand">waymark</span>
+      </header>
+    );
+  }
+
   return (
     <header className={className}>
-      <button type="button" onClick={() => inputRef.current?.click()}>
-        <FolderPlus size={16} /> Open GPX
-      </button>
-      <input
-        ref={inputRef}
-        type="file"
-        accept=".gpx,application/gpx+xml,text/xml"
-        hidden
-        data-testid="file-input"
-        onChange={(event) => {
-          const [file] = event.target.files;
-          if (file) loadFile(file);
-          event.target.value = "";
-        }}
-      />
+      <OpenFile />
       {fileName && (
-        <span className="file">
-          {fileName}
-          {dirty ? " •" : ""}
+        <span className="doc">
+          <span className="file" title={fileName}>
+            {fileName}
+          </span>
+          {dirty && <span className="unsaved">Unsaved changes</span>}
         </span>
       )}
       <label className="zone">
@@ -64,6 +63,20 @@ function Toolbar({ className }) {
       <button type="button" className="export" disabled={status !== "ready"} onClick={onExport}>
         <Download size={16} /> Export GPX
       </button>
+      {pendingFile && (
+        <div className="confirm" role="alert">
+          <p>
+            Open {pendingFile.name}? Your unsaved changes to {fileName} will be lost: export first
+            to keep them.
+          </p>
+          <button type="button" className="discard" onClick={confirmOpen}>
+            Discard and open
+          </button>
+          <button type="button" onClick={cancelOpen}>
+            Keep editing
+          </button>
+        </div>
+      )}
       {exportError && (
         <p role="alert" className="error">
           {exportError}
