@@ -24,6 +24,7 @@ const style = (Component) => styled(Component)`
      instead of sitting on the map's controls. */
   @media (max-width: 52em) {
     position: absolute;
+    right: calc(env(safe-area-inset-right, 0px) + 1rem);
   }
 
   &:hover {

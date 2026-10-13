@@ -101,6 +101,10 @@ const style = (Component) => styled(Component)`
 
   /* A phone: Open and Export on the first line, the file's name under them. */
   @media (max-width: 52em) {
+    gap: 0.5rem;
+    /* The toggle sits 1rem in on a phone (ThemeToggle.style.js). */
+    padding-right: calc(1rem + 44px + 0.5rem);
+
     .doc {
       order: 1;
       flex-basis: 100%;
@@ -110,6 +114,19 @@ const style = (Component) => styled(Component)`
     .confirm,
     .error {
       order: 2;
+    }
+  }
+
+  /* A narrow phone: Open and Export still on one line, by their words alone.
+     why drop the icons, not "GPX": the words say what the buttons do, the icons only echo
+     them, and keeping both put Export on a line of its own under 376 px. */
+  @media (max-width: 23.5em) {
+    button {
+      padding-inline: 0.75rem;
+    }
+
+    button > svg {
+      display: none;
     }
   }
 
