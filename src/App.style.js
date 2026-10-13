@@ -170,9 +170,10 @@ export const Layout = styled.div`
     padding-right: 0.25rem;
   }
 
-  /* A phone: the map stays at the top while the pins scroll under it.
-     why sticky, not a bottom sheet: most of the benefit (map and editor both on screen)
-     with no drag-handle gestures, and the same markup as the desktop. */
+  /* A phone: the map, then the pins and the plan, in the page's own scroll.
+     why not sticky: a map pinned over the page took half the screen, and with the
+     keyboard up to name a pin nearly all of it, the fields scrolling under it. A map in the
+     flow scrolls away while typing; fullscreen is the map-and-pins view, split below. */
   @media (max-width: 52em) {
     main {
       padding: 0 0.5rem;
@@ -192,12 +193,7 @@ export const Layout = styled.div`
     }
 
     .map {
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      height: 42vh;
-      padding-top: 0.25rem;
-      background: var(--color-background);
+      height: 55svh;
     }
 
     aside {
@@ -205,10 +201,25 @@ export const Layout = styled.div`
       padding-right: 0;
     }
 
+    /* Fullscreen splits the screen: the map above, the pins scrolling on their own below,
+       side by side in time as on a desktop, never one over the other. */
     .workspace:fullscreen,
     .workspace:-webkit-full-screen,
     .workspace.is-fullscreen {
+      grid-template-rows: minmax(0, 55fr) minmax(0, 45fr);
+    }
+
+    .workspace:fullscreen .map,
+    .workspace:-webkit-full-screen .map,
+    .workspace.is-fullscreen .map {
+      height: auto;
+    }
+
+    .workspace:fullscreen aside,
+    .workspace:-webkit-full-screen aside,
+    .workspace.is-fullscreen aside {
       overflow-y: auto;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
     }
   }
 `;

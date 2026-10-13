@@ -18,6 +18,8 @@ const PITCH_3D = 55;
 const TEXT_FONT = ["DIN Pro Bold", "Arial Unicode MS Bold"];
 // Room around the route when fitting it: a pin stands 36 px above its point.
 const FIT_PADDING = { top: 64, bottom: 32, left: 48, right: 64 };
+// The phone layout's breakpoint, as in App.style.js.
+const PHONE = "(max-width: 52em)";
 
 // geometry.points is flat [latitude, longitude, elevation, distance] per point.
 export function routeFeature(points) {
@@ -116,6 +118,10 @@ function EditorMap({ className, children, isFullscreen, onToggleFullscreen }) {
   // A Marker only moves when its props change: after a drop the store refused (off the
   // route), redraw so the pin goes back to where the store has it.
   const [, redraw] = useState(0);
+  // On a phone the map sits in a page that scrolls: one finger scrolls the page, two move
+  // the map (a tap still adds a pin, a pin still drags).
+  // why cooperative gestures: without them the map, half the screen, swallowed every swipe.
+  const [onPhone] = useState(() => window.matchMedia?.(PHONE).matches ?? false);
 
   const feature = useMemo(() => routeFeature(geometry.points), [geometry]);
   const marks = useMemo(() => kmMarks(geometry.points, geometry.distance_m), [geometry]);
@@ -154,6 +160,13 @@ function EditorMap({ className, children, isFullscreen, onToggleFullscreen }) {
     const id = requestAnimationFrame(() => map.resize());
     return () => cancelAnimationFrame(id);
   }, [isFullscreen]);
+
+  // Off in fullscreen, which has no page around the map to scroll. Mapbox builds the
+  // two-finger hints when the map is made, so this only switches off what a phone started.
+  useEffect(() => {
+    if (!onPhone) return;
+    mapRef.current?.getMap?.()?.setCooperativeGestures?.(!isFullscreen);
+  }, [onPhone, isFullscreen]);
 
   const fullscreenButton = (
     <button
@@ -227,6 +240,7 @@ function EditorMap({ className, children, isFullscreen, onToggleFullscreen }) {
           pitch: 0,
         }}
         maxPitch={70}
+        cooperativeGestures={onPhone}
         onLoad={onLoad}
         onClick={onClick}
         cursor="crosshair"

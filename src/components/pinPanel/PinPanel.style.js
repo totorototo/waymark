@@ -192,13 +192,6 @@ const style = (Component) => styled(Component)`
     font-size: var(--font-size-tiny);
   }
 
-  /* On a phone the map is sticky over the page: a pin scrolled into view lands under it. */
-  @media (max-width: 52em) {
-    li {
-      scroll-margin-top: 46vh;
-    }
-  }
-
   .remove {
     ${chipDanger}
     align-self: flex-start;

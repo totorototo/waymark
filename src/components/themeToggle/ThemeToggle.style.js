@@ -20,8 +20,8 @@ const style = (Component) => styled(Component)`
   cursor: pointer;
   transition: all var(--transition-base);
 
-  /* On a phone the map sticks to the top of the page: the toggle scrolls away with the
-     toolbar instead of sitting on the map's controls. */
+  /* On a phone the page scrolls past the map: the toggle scrolls away with the toolbar
+     instead of sitting on the map's controls. */
   @media (max-width: 52em) {
     position: absolute;
   }
