@@ -5,9 +5,11 @@ import { Trash2 } from "@styled-icons/feather/Trash2";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { startTime, TYPE_LABELS, validatePins, WAYPOINT_TYPES } from "../../gpx/pins.js";
+import { BADGE_LABELS, marginTier, planEntriesByPin, shownMargin } from "../../gpx/planRows.js";
 import { epochToUtc, epochToZoned, timeZones, zonedToEpoch } from "../../gpx/time.js";
 import useStore from "../../store/store.js";
-import { formatClock, formatKm } from "../../utils/format.js";
+import { FOLD_MS } from "../../theme/controls.js";
+import { formatKm, formatMargin, formatShortClock } from "../../utils/format.js";
 import style from "./PinPanel.style.js";
 
 function Issues({ issues }) {
@@ -22,11 +24,11 @@ function Issues({ issues }) {
   );
 }
 
-// What a row says about a pin besides its name: its type, and its cutoff when it has one.
-function rowMeta(pin, timeZone) {
+// What a row says about a pin under its name: its type and where it is. The cutoff is the
+// row's key time, on the right.
+function rowMeta(pin) {
   const type = pin.type_name ? TYPE_LABELS[pin.type_name] : "Landmark";
-  if (pin.epoch_s === null) return type;
-  return `${type} · ${formatClock(pin.epoch_s, timeZone)}`;
+  return `${type} · ${formatKm(pin.distance_m)}`;
 }
 
 // The race's time zone, typed with suggestions: about 400 zones are too many for a select.
@@ -211,6 +213,9 @@ function PinPanel({ className }) {
   const selectedId = useStore((state) => state.selectedId);
   const addedId = useStore((state) => state.addedId);
   const timeZone = useStore((state) => state.timeZone);
+  const plan = useStore((state) => state.plan);
+  // While a new plan is computing, the figures are the last plan's: dimmed, not hidden.
+  const updating = useStore((state) => state.planStatus === "computing");
   const selectPin = useStore((state) => state.selectPin);
   const updatePin = useStore((state) => state.updatePin);
   const removePin = useStore((state) => state.removePin);
@@ -220,17 +225,41 @@ function PinPanel({ className }) {
   const [confirming, setConfirming] = useState(false);
   const listRef = useRef(null);
 
+  // The pin whose editor is folding shut: it stays mounted until the fold has closed, so the
+  // form slides away instead of vanishing. Only the open and the closing pin hold an editor.
+  // why set during render: the previous selection is known only here; React re-renders at
+  // once with it, before painting (the "storing information from previous renders" pattern).
+  const [shownId, setShownId] = useState(selectedId);
+  const [closingId, setClosingId] = useState(null);
+  if (shownId !== selectedId) {
+    setClosingId(shownId);
+    setShownId(selectedId);
+  }
+  useEffect(() => {
+    if (closingId === null) return undefined;
+    const timer = setTimeout(() => setClosingId(null), FOLD_MS);
+    return () => clearTimeout(timer);
+  }, [closingId]);
+
   // why here, not in the Plan: an issue is about a pin, so it shows on that pin's row, where
   // the fix is; only what no single pin owns (no Start, no Arrival) goes above the list.
   const issues = useMemo(() => validatePins(pins), [pins]);
   const routeIssues = issues.filter((issue) => issue.pinId === null);
   const issuesOf = (id) => issues.filter((issue) => issue.pinId === id);
+  const planOf = useMemo(() => planEntriesByPin(pins, plan), [pins, plan]);
+  // Clock times on the race's first day read as "08:38"; later days add the weekday, as in
+  // the Plan's table.
+  const raceDay = startTime(pins);
+  const clock = (epoch) => formatShortClock(epoch, timeZone, raceDay);
 
   // A pin picked on the map opens here: bring it into view, in the panel or on a phone's page.
   useEffect(() => {
     if (!selectedId) return;
     const item = listRef.current?.querySelector(`[data-pin="${selectedId}"]`);
-    item?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+    // why: scrollIntoView's smooth scroll is JS-driven, so the global reduced-motion rule
+    // (CSS transitions and animations only) does not reach it: check the preference here.
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    item?.scrollIntoView?.({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
   }, [selectedId]);
 
   return (
@@ -288,6 +317,11 @@ function PinPanel({ className }) {
           const own = issuesOf(pin.id);
           const level = own.some((issue) => issue.level === "error") ? "error" : "warning";
           const Flag = level === "error" ? AlertCircle : AlertTriangle;
+          // The Start's cutoff is the start itself: its margin is always 0, so no badge.
+          const entry = pin.type_name === "Start" ? undefined : planOf.get(pin.id);
+          const margin = entry === undefined ? null : shownMargin(entry);
+          const hasFigures = margin !== null;
+          const tier = marginTier(margin);
           return (
             <li key={pin.id} data-pin={pin.id} className={pin.id === selectedId ? "selected" : ""}>
               <button
@@ -296,29 +330,64 @@ function PinPanel({ className }) {
                 aria-expanded={pin.id === selectedId}
                 onClick={() => selectPin(pin.id === selectedId ? null : pin.id)}
               >
-                <span className="index">{index + 1}</span>
-                <span className="label">
-                  <span className="name">{pin.name || "Unnamed pin"}</span>
-                  <span className="meta">{rowMeta(pin, timeZone)}</span>
+                <span className="top">
+                  <span className="index">{index + 1}</span>
+                  <span className="label">
+                    <span className="name">{pin.name || "Unnamed pin"}</span>
+                    <span className="meta">{rowMeta(pin)}</span>
+                  </span>
+                  <span className="key">
+                    {pin.epoch_s !== null && <span className="time">{clock(pin.epoch_s)}</span>}
+                    {tier && (
+                      <span className={`badge tier-${tier}${updating ? " is-updating" : ""}`}>
+                        {BADGE_LABELS[tier]}
+                      </span>
+                    )}
+                  </span>
+                  <span className={`flag level-${level}`}>
+                    {own.length > 0 && (
+                      <Flag
+                        size={16}
+                        title={own.length === 1 ? "1 issue" : `${own.length} issues`}
+                      />
+                    )}
+                  </span>
                 </span>
-                <span className="km">{formatKm(pin.distance_m)}</span>
-                <span className={`flag level-${level}`}>
-                  {own.length > 0 && (
-                    <Flag size={16} title={own.length === 1 ? "1 issue" : `${own.length} issues`} />
-                  )}
-                </span>
+                {/* why spans, not a dl: the whole row is the button that opens the editor,
+                    and a button holds phrasing content only. */}
+                {hasFigures && (
+                  <span className={`figures${updating ? " is-updating" : ""}`}>
+                    <span className="figure">
+                      <span className="figure-label">Plan arrives</span>
+                      <span className="figure-value">{clock(entry.epoch_s_arrival)}</span>
+                    </span>
+                    <span className="figure">
+                      <span className="figure-label">Spare at departure</span>
+                      <span className={`figure-value${tier === "over" ? " is-over" : ""}`}>
+                        {formatMargin(margin)}
+                      </span>
+                    </span>
+                  </span>
+                )}
               </button>
-              {pin.id === selectedId && (
-                <PinEditor
-                  pin={pin}
-                  issues={own}
-                  timeZone={timeZone}
-                  fallbackDay={defaultDay(pins, timeZone)}
-                  focusTime={pin.id === addedId}
-                  onChange={(patch) => updatePin(pin.id, patch)}
-                  onRemove={() => removePin(pin.id)}
-                />
-              )}
+              <div
+                className={`fold${pin.id === selectedId ? " open" : ""}`}
+                inert={pin.id !== selectedId}
+              >
+                <div className="fold-inner">
+                  {(pin.id === selectedId || pin.id === closingId) && (
+                    <PinEditor
+                      pin={pin}
+                      issues={own}
+                      timeZone={timeZone}
+                      fallbackDay={defaultDay(pins, timeZone)}
+                      focusTime={pin.id === addedId}
+                      onChange={(patch) => updatePin(pin.id, patch)}
+                      onRemove={() => removePin(pin.id)}
+                    />
+                  )}
+                </div>
+              </div>
             </li>
           );
         })}

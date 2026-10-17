@@ -44,7 +44,7 @@ const style = (Component) => styled(Component)`
   }
 
   .brand-way {
-    color: color-mix(in srgb, var(--color-text) 70%, transparent);
+    color: var(--color-text-muted);
   }
 
   .doc {

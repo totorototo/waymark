@@ -12,10 +12,13 @@ test("opens a GPX, plans it, and exports it", async ({ page }) => {
   await expect(page.getByText("route.gpx", { exact: true })).toBeVisible();
   // The file's waypoints, matched to the track by gpxz, are the pins.
   await expect(page.getByRole("heading", { name: "Pins (3)" })).toBeVisible();
-  const plan = page.getByRole("region", { name: "Plan" });
+  const pins = page.getByRole("region", { name: "Pins" });
   for (const name of ["Start", "Refuge", "Finish"]) {
-    await expect(plan.getByRole("rowheader", { name, exact: true })).toBeVisible();
+    await expect(pins.getByRole("button", { name: new RegExp(`^\\d+ ${name}`) })).toBeVisible();
   }
+  // The plan is built: its one line gives the finish time.
+  const plan = page.getByRole("region", { name: "Plan" });
+  await expect(plan.getByText(/^Finish .*\./)).toBeVisible();
   await plan.getByText("Sections (2)").click();
   await expect(plan.getByRole("rowheader", { name: "Refuge → Finish" })).toBeVisible();
 

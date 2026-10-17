@@ -5,6 +5,7 @@ import {
   formatClock,
   formatDuration,
   formatKm,
+  formatMargin,
   formatPace,
   formatShortClock,
   metersPerPixel,
@@ -23,6 +24,15 @@ describe("format", () => {
     expect(formatDuration(-5400)).toBe("-1h30");
     expect(formatDuration(null)).toBe("–");
     expect(formatDuration(undefined)).toBe("–");
+  });
+
+  it("writes margins as the checkpoint row does", () => {
+    expect(formatMargin(3840)).toBe("1h04");
+    expect(formatMargin(420)).toBe("0h07");
+    expect(formatMargin(-1440)).toBe("−0h24");
+    expect(formatMargin(-10)).toBe("0h00");
+    expect(formatMargin(-400 * 3600)).toBe("−99h+");
+    expect(formatMargin(null)).toBe("–");
   });
 
   it("writes and reads paces", () => {

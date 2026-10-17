@@ -52,7 +52,7 @@ export const Layout = styled.div`
   .start .ledger {
     width: 100%;
     max-width: 28rem;
-    border-top: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+    border-top: 1px solid var(--color-hairline);
   }
 
   /* The drop target, as Terminus marks it: round the ledger, not the whole page. */
@@ -70,7 +70,7 @@ export const Layout = styled.div`
     padding: 1rem 0;
     background: none;
     border: 0;
-    border-bottom: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+    border-bottom: 1px solid var(--color-hairline);
     color: var(--color-text);
     font-family: var(--font-family-mono);
     font-size: var(--font-size-small);

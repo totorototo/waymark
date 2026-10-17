@@ -1,42 +1,105 @@
+const LIGHT = {
+  "--color-background": "#c4c4c4",
+  "--color-text": "#363537",
+  "--color-secondary": "#DA7422",
+  "--color-primary": "#6A7FDB",
+  "--color-accent": "#D81E5B",
+  "--color-progress": "#ededed",
+  "--color-surface": "#ebe7e2",
+  "--color-primary-text": "#2A3AA5",
+  "--color-secondary-text": "#7A3509",
+  "--color-accent-text": "#971143",
+  "--color-success": "#16a34a",
+  // Design system tokens (Trail Suite, 2026-10-17). Text steps, status
+  // marks and the terrain mauve; each is checked at 4.5:1 (text) or
+  // 3:1 (marks) on background and surface.
+  "--color-text-muted": "rgba(54, 53, 55, 0.88)",
+  "--color-text-faint": "rgba(54, 53, 55, 0.82)",
+  "--color-hairline": "rgba(54, 53, 55, 0.10)",
+  "--color-success-text": "#2c563d",
+  "--color-behind": "#d01d58",
+  "--color-ahead": "#117c38",
+  "--color-control-border": "#6e6b6d",
+  "--color-on-button-primary": "#ffffff",
+  "--color-direction-up": "rgba(54, 53, 55, 0.85)",
+  "--color-direction-flat": "rgba(54, 53, 55, 0.30)",
+  "--color-direction-down": "rgba(54, 53, 55, 0.55)",
+  "--color-effort-1": "#8f559d",
+  "--color-effort-2": "#72447e",
+  "--color-effort-3": "#573460",
+  "--color-effort-4": "#3d2444",
+  "--color-effort-5": "#231526",
+  "--color-profile-day": "rgba(143, 85, 157, 0.35)",
+  "--color-profile-night": "rgba(61, 36, 68, 0.60)",
+};
+
+const DARK = {
+  "--color-background": "#3A3335",
+  "--color-text": "#D8DBE2",
+  "--color-primary": "#f2af29",
+  "--color-secondary": "#6E9075",
+  "--color-primary-text": "#f2af29",
+  "--color-secondary-text": "#9DC4A4",
+  "--color-accent": "#d81e5b",
+  "--color-progress": "#ced5e0",
+  "--color-surface": "#3d3b3b",
+  "--color-success": "#22c55e",
+  "--color-accent-text": "#f382a4",
+  "--color-text-muted": "rgba(216, 219, 226, 0.75)",
+  "--color-text-faint": "rgba(216, 219, 226, 0.70)",
+  "--color-hairline": "rgba(216, 219, 226, 0.10)",
+  "--color-behind": "#e64b7e",
+  "--color-control-border": "#8d8a90",
+  "--color-direction-up": "rgba(216, 219, 226, 0.85)",
+  "--color-direction-flat": "rgba(216, 219, 226, 0.30)",
+  "--color-direction-down": "rgba(216, 219, 226, 0.55)",
+  "--color-effort-1": "#a774b4",
+  "--color-effort-2": "#b489bf",
+  "--color-effort-3": "#c5a3cd",
+  "--color-effort-4": "#d6bedc",
+  "--color-effort-5": "#e7daeb",
+  "--color-profile-day": "rgba(214, 190, 220, 0.70)",
+  "--color-profile-night": "rgba(167, 116, 180, 0.55)",
+};
+
+// why: these name a meaning, not a new value — deriving them from the base
+// token keeps them from drifting when the base changes (behind-text must stay
+// the accent text, the focus ring the primary that reads on the ground).
+const lightAliases = {
+  "--color-behind-text": LIGHT["--color-accent-text"],
+  "--color-ahead-text": LIGHT["--color-success-text"],
+  "--color-focus": LIGHT["--color-primary-text"],
+  "--color-button-primary": LIGHT["--color-primary-text"],
+};
+
+const darkAliases = {
+  "--color-success-text": DARK["--color-success"],
+  "--color-behind-text": DARK["--color-accent-text"],
+  "--color-ahead": DARK["--color-secondary"],
+  "--color-ahead-text": DARK["--color-secondary-text"],
+  "--color-focus": DARK["--color-primary"],
+  "--color-button-primary": DARK["--color-primary"],
+  "--color-on-button-primary": DARK["--color-background"],
+};
+
+// Waymark only: form fields, lighter than the cards they sit on so they read as editable
+// (on the page's grey they looked sunken, as if disabled). The border holds 3:1 on the
+// background and the surface: light's was #8a8789 (2.0:1), now the control border.
+const lightFields = {
+  "--color-field": "#fbfaf8",
+  "--color-field-border": LIGHT["--color-control-border"],
+};
+
+const darkFields = {
+  "--color-field": "#2b2527",
+  "--color-field-border": DARK["--color-control-border"],
+};
+
+// The colours are Terminus's Theme.js (the Trail Suite design system) plus the fields above.
 const THEME = {
   colors: {
-    light: {
-      "--color-background": "#c4c4c4",
-      "--color-text": "#363537",
-      "--color-secondary": "#DA7422",
-      "--color-primary": "#6A7FDB",
-      "--color-accent": "#D81E5B",
-      "--color-progress": "#ededed",
-      "--color-surface": "#ebe7e2",
-      "--color-primary-text": "#2A3AA5",
-      "--color-secondary-text": "#7A3509",
-      "--color-accent-text": "#971143",
-      "--color-success": "#16a34a",
-      // The main action's fill and label: #c4c4c4 on --color-primary is 2.1:1, read as disabled.
-      "--color-button-primary": "#2A3AA5",
-      "--color-on-button-primary": "#ffffff",
-      // Form fields: lighter than the cards they sit on, so they read as editable. On the
-      // page's grey they looked sunken, as if disabled.
-      "--color-field": "#fbfaf8",
-      "--color-field-border": "#8a8789",
-    },
-    dark: {
-      "--color-background": "#3A3335",
-      "--color-text": "#D8DBE2",
-      "--color-primary": "#f2af29",
-      "--color-secondary": "#6E9075",
-      "--color-primary-text": "#f2af29",
-      "--color-secondary-text": "#9DC4A4",
-      "--color-accent": "#d81e5b",
-      "--color-progress": "#ced5e0",
-      "--color-surface": "#3d3b3b",
-      "--color-success": "#22c55e",
-      "--color-accent-text": "#f2789d",
-      "--color-button-primary": "#f2af29",
-      "--color-on-button-primary": "#3A3335",
-      "--color-field": "#2b2527",
-      "--color-field-border": "#8d8a90",
-    },
+    light: { ...LIGHT, ...lightAliases, ...lightFields },
+    dark: { ...DARK, ...darkAliases, ...darkFields },
   },
 
   font: {
@@ -72,6 +135,20 @@ const THEME = {
     "--border-radius-lg": "24px",
     "--border-radius-xl": "28px",
     "--border-radius-full": "50%",
+  },
+
+  // The map's own inks, the same in both themes (design system, Map): the outdoors basemap
+  // stays light in dark mode, so they read against the map, not the page. Chosen on the real
+  // map: the brand gold for the route, the accent for the pins (white number, 4.9:1), the
+  // terrain mauve for the picked pin. why not ink or deep blue: both read too heavy on the
+  // basemap. The gold line sits under 3:1 on the map's land and relies on its width and
+  // white casing.
+  map: {
+    route: DARK["--color-primary"],
+    casing: "#ffffff",
+    pin: LIGHT["--color-accent"],
+    live: LIGHT["--color-effort-1"],
+    label: LIGHT["--color-text"],
   },
 
   zIndex: {

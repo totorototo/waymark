@@ -47,8 +47,11 @@ Zigar, react-map-gl/Mapbox.
   `scripts/make-icons.mjs`), except a new build waits for the person: the masthead offers
   it (`UpdateNotice`) only with nothing unsaved, as the reload would drop the pins. Mapbox
   tiles are not cached; offline, the map does not draw.
-- Design system: `src/theme/Theme.js` (from Terminus). Use the CSS custom properties.
-  Component styles go in `*.style.js` next to the component.
+- Design system (Trail Suite): `src/theme/Theme.js` is Terminus's colour tokens plus Waymark's
+  field tokens and the map inks (`map`, fixed across themes: the basemap stays light). Use the
+  CSS custom properties; the map reads `THEME.map` as JS values. Shared control styles are
+  fragments in `src/theme/controls.js`. Component styles go in `*.style.js` next to the
+  component.
 
 ## Data
 
