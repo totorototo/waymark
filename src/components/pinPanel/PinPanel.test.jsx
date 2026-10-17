@@ -71,35 +71,21 @@ describe("PinPanel rows", () => {
 
   afterEach(() => vi.useRealTimers());
 
-  it("gives a timed checkpoint its cutoff, badge and two figures", () => {
+  it("shows each pin's cutoff as its key time", () => {
     renderPanel();
-    const houches = row("Les Houches");
-    expect(within(houches).getByText("22:00")).toBeTruthy();
-    expect(within(houches).getByText("OK")).toBeTruthy();
-    expect(within(houches).getByText("Plan arrives")).toBeTruthy();
-    expect(within(houches).getByText("19:05")).toBeTruthy();
-    expect(within(houches).getByText("2h55")).toBeTruthy();
+    expect(within(row("Les Houches")).getByText("22:00")).toBeTruthy();
+    expect(within(row("Start")).getByText("17:45")).toBeTruthy();
   });
 
-  it("gives the Start its time but no badge: its margin is always 0", () => {
+  // Waymark edits the director's file: the pace plan's predictions are the Plan's, not a pin's.
+  it("shows no pace plan on a pin, even with a plan computed", () => {
     renderPanel();
-    const start = row("Start");
-    expect(within(start).getByText("17:45")).toBeTruthy();
-    expect(within(start).queryByText(/^(OK|Tight|Over)$/)).toBeNull();
-    expect(within(start).queryByText("Plan arrives")).toBeNull();
-  });
-
-  it("gives no figures to a pin without a cutoff or without a plan entry", () => {
-    renderPanel();
-    expect(within(row("Col")).queryByText("Plan arrives")).toBeNull();
-    expect(within(row("Finish")).queryByText("Plan arrives")).toBeNull();
-  });
-
-  it("dims the last plan's figures while the next one computes", () => {
-    useStore.setState({ planStatus: "computing" });
-    renderPanel();
-    const houches = row("Les Houches");
-    expect(within(houches).getByText("OK").className).toContain("is-updating");
+    for (const name of ["Start", "Les Houches", "Col", "Finish"]) {
+      const pinRow = row(name);
+      expect(within(pinRow).queryByText(/^(OK|Tight|Over)$/)).toBeNull();
+      expect(within(pinRow).queryByText("Plan arrives")).toBeNull();
+      expect(within(pinRow).queryByText("Spare at departure")).toBeNull();
+    }
   });
 
   it("keeps a closing editor until its fold has shut, then drops it", () => {

@@ -104,6 +104,12 @@ const style = (Component) => styled(Component)`
     font-family: var(--font-family-mono);
     white-space: nowrap;
   }
+
+  /* A checkpoint whose planned departure is past its cutoff. */
+  tr.late th,
+  tr.late td {
+    color: var(--color-behind-text);
+  }
 `;
 
 export default style;

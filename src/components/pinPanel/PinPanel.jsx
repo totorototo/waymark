@@ -5,11 +5,10 @@ import { Trash2 } from "@styled-icons/feather/Trash2";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { startTime, TYPE_LABELS, validatePins, WAYPOINT_TYPES } from "../../gpx/pins.js";
-import { BADGE_LABELS, marginTier, planEntriesByPin, shownMargin } from "../../gpx/planRows.js";
 import { epochToUtc, epochToZoned, timeZones, zonedToEpoch } from "../../gpx/time.js";
 import useStore from "../../store/store.js";
 import { FOLD_MS } from "../../theme/controls.js";
-import { formatKm, formatMargin, formatShortClock } from "../../utils/format.js";
+import { formatKm, formatShortClock } from "../../utils/format.js";
 import style from "./PinPanel.style.js";
 
 function Issues({ issues }) {
@@ -213,9 +212,6 @@ function PinPanel({ className }) {
   const selectedId = useStore((state) => state.selectedId);
   const addedId = useStore((state) => state.addedId);
   const timeZone = useStore((state) => state.timeZone);
-  const plan = useStore((state) => state.plan);
-  // While a new plan is computing, the figures are the last plan's: dimmed, not hidden.
-  const updating = useStore((state) => state.planStatus === "computing");
   const selectPin = useStore((state) => state.selectPin);
   const updatePin = useStore((state) => state.updatePin);
   const removePin = useStore((state) => state.removePin);
@@ -246,9 +242,8 @@ function PinPanel({ className }) {
   const issues = useMemo(() => validatePins(pins), [pins]);
   const routeIssues = issues.filter((issue) => issue.pinId === null);
   const issuesOf = (id) => issues.filter((issue) => issue.pinId === id);
-  const planOf = useMemo(() => planEntriesByPin(pins, plan), [pins, plan]);
   // Clock times on the race's first day read as "08:38"; later days add the weekday, as in
-  // the Plan's table.
+  // the Plan's tables.
   const raceDay = startTime(pins);
   const clock = (epoch) => formatShortClock(epoch, timeZone, raceDay);
 
@@ -317,11 +312,6 @@ function PinPanel({ className }) {
           const own = issuesOf(pin.id);
           const level = own.some((issue) => issue.level === "error") ? "error" : "warning";
           const Flag = level === "error" ? AlertCircle : AlertTriangle;
-          // The Start's cutoff is the start itself: its margin is always 0, so no badge.
-          const entry = pin.type_name === "Start" ? undefined : planOf.get(pin.id);
-          const margin = entry === undefined ? null : shownMargin(entry);
-          const hasFigures = margin !== null;
-          const tier = marginTier(margin);
           return (
             <li key={pin.id} data-pin={pin.id} className={pin.id === selectedId ? "selected" : ""}>
               <button
@@ -336,13 +326,10 @@ function PinPanel({ className }) {
                     <span className="name">{pin.name || "Unnamed pin"}</span>
                     <span className="meta">{rowMeta(pin)}</span>
                   </span>
+                  {/* why only the cutoff: a pin row shows what the director sets in the
+                      file. The pace plan's predictions (arrival, spare) are the Plan's. */}
                   <span className="key">
                     {pin.epoch_s !== null && <span className="time">{clock(pin.epoch_s)}</span>}
-                    {tier && (
-                      <span className={`badge tier-${tier}${updating ? " is-updating" : ""}`}>
-                        {BADGE_LABELS[tier]}
-                      </span>
-                    )}
                   </span>
                   <span className={`flag level-${level}`}>
                     {own.length > 0 && (
@@ -353,22 +340,6 @@ function PinPanel({ className }) {
                     )}
                   </span>
                 </span>
-                {/* why spans, not a dl: the whole row is the button that opens the editor,
-                    and a button holds phrasing content only. */}
-                {hasFigures && (
-                  <span className={`figures${updating ? " is-updating" : ""}`}>
-                    <span className="figure">
-                      <span className="figure-label">Plan arrives</span>
-                      <span className="figure-value">{clock(entry.epoch_s_arrival)}</span>
-                    </span>
-                    <span className="figure">
-                      <span className="figure-label">Spare at departure</span>
-                      <span className={`figure-value${tier === "over" ? " is-over" : ""}`}>
-                        {formatMargin(margin)}
-                      </span>
-                    </span>
-                  </span>
-                )}
               </button>
               <div
                 className={`fold${pin.id === selectedId ? " open" : ""}`}
