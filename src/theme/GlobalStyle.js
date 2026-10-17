@@ -1,9 +1,5 @@
+import { toCustomProperties } from "@totorototo/trail-tokens";
 import { createGlobalStyle } from "styled-components";
-
-const toCustomProperties = (entries) =>
-  Object.entries(entries)
-    .map(([rule, value]) => `${rule}: ${value};`)
-    .join("\n");
 
 // The CSS custom properties from Theme.js, as in Terminus's ThemedApp.
 const GlobalStyle = createGlobalStyle`
