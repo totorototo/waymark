@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { createJSONStorage, devtools, persist } from "zustand/middleware";
 
 import {
   checkpointAdd,
@@ -32,42 +33,42 @@ export const PLACE_RADIUS_M = 150;
 // What a checkpoint action answers before a file is open: what to do, not only what is wrong.
 const NO_GPX = "No GPX loaded: open one with load_gpx, or ask the person to use Open GPX.";
 
-const THEME_KEY = "waymark-theme";
-const ZONE_KEY = "waymark-timezone";
+// The two preferences a reload keeps; the file and the pins must not survive one.
+const STORAGE_KEY = "waymark-storage";
+const persisted = ({ theme, timeZone }) => ({ theme, timeZone });
 
-// The variant the user last picked, else the system's, as Terminus starts from.
-// why: localStorage, not zustand's persist middleware: two strings survive a reload, and the
-// store's other state (the file, the pins) must not.
-function initialTheme() {
-  try {
-    const saved = localStorage.getItem(THEME_KEY);
-    if (saved === "dark" || saved === "light") return saved;
-  } catch {
-    // Storage blocked (private mode, a sandbox): fall back to the system.
+// localStorage, quiet when blocked or full (private mode, a sandbox): the preference is then
+// not remembered, and the next visit starts from the default.
+const storage = createJSONStorage(() => ({
+  getItem: (name) => localStorage.getItem(name),
+  setItem: (name, value) => {
+    try {
+      localStorage.setItem(name, value);
+    } catch {
+      // Not remembered.
+    }
+  },
+  removeItem: (name) => localStorage.removeItem(name),
+}));
+
+// The saved preferences over the defaults, each only if still valid: a zone the browser no
+// longer knows starts from the browser's.
+function mergePersisted(saved, current) {
+  const merged = { ...current };
+  if (saved?.theme === "dark" || saved?.theme === "light") merged.theme = saved.theme;
+  if (typeof saved?.timeZone === "string" && isValidTimeZone(saved.timeZone)) {
+    merged.timeZone = saved.timeZone;
   }
+  return merged;
+}
+
+// The system's variant, as Terminus starts from, until the user picks one.
+function systemTheme() {
   const prefersDark =
     typeof window !== "undefined" &&
     typeof window.matchMedia === "function" &&
     window.matchMedia("(prefers-color-scheme: dark)").matches;
   return prefersDark ? "dark" : "light";
-}
-
-function initialTimeZone() {
-  try {
-    const saved = localStorage.getItem(ZONE_KEY);
-    if (saved && isValidTimeZone(saved)) return saved;
-  } catch {
-    // As above.
-  }
-  return browserTimeZone();
-}
-
-function remember(key, value) {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // Not remembered: the next visit starts from the default.
-  }
 }
 
 // "race.gpx" → "race-edited.gpx": the download never overwrites the director's file.
@@ -90,7 +91,7 @@ export const createStore = (getClient = createWorkerClient) => {
   let nextPinId = 1;
   const pinId = () => `pin-${nextPinId++}`;
 
-  return create((set, get) => {
+  const creator = (set, get) => {
     // The plan of the file the pins would make, written unless a newer edit or file has made
     // it stale.
     async function computePlan() {
@@ -181,19 +182,13 @@ export const createStore = (getClient = createWorkerClient) => {
     }
 
     return {
-      theme: initialTheme(),
-      toggleTheme: () =>
-        set((state) => {
-          const theme = state.theme === "dark" ? "light" : "dark";
-          remember(THEME_KEY, theme);
-          return { theme };
-        }),
+      theme: systemTheme(),
+      toggleTheme: () => set((state) => ({ theme: state.theme === "dark" ? "light" : "dark" })),
 
       // The race's clock: cutoffs are typed in it and saved as UTC.
-      timeZone: initialTimeZone(),
+      timeZone: browserTimeZone(),
       setTimeZone: (timeZone) => {
         if (!isValidTimeZone(timeZone)) return;
-        remember(ZONE_KEY, timeZone);
         set({ timeZone });
       },
 
@@ -484,7 +479,21 @@ export const createStore = (getClient = createWorkerClient) => {
         return { name: editedFileName(get().fileName), bytes };
       },
     };
-  });
+  };
+
+  // why: persist + devtools as Terminus. partialize keeps the file and the pins out of
+  // storage; devtools is on in development only (Vitest runs as MODE "test").
+  return create(
+    devtools(
+      persist(creator, {
+        name: STORAGE_KEY,
+        storage,
+        partialize: persisted,
+        merge: mergePersisted,
+      }),
+      { name: "Waymark Store", enabled: import.meta.env.MODE === "development" },
+    ),
+  );
 };
 
 const useStore = createStore();
