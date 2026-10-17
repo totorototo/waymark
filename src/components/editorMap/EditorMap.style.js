@@ -9,6 +9,7 @@ export const MAP_COLORS = {
   pin: THEME.map.pin,
   selected: THEME.map.live,
   label: THEME.map.label,
+  shadow: THEME.map.shadow,
 };
 
 const style = (Component) => styled(Component)`
@@ -78,7 +79,7 @@ const style = (Component) => styled(Component)`
     padding: 0;
     background: none;
     border: 0;
-    color: #ffffff;
+    color: ${MAP_COLORS.casing};
     cursor: grab;
     transform-origin: bottom center;
     transition: transform var(--transition-fast);
@@ -89,7 +90,7 @@ const style = (Component) => styled(Component)`
     fill: ${MAP_COLORS.pin};
     stroke: ${MAP_COLORS.casing};
     stroke-width: 1.5px;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+    filter: drop-shadow(0 1px 2px ${MAP_COLORS.shadow});
   }
 
   /* The number takes the place of the pin's inner circle. */
@@ -125,7 +126,7 @@ const style = (Component) => styled(Component)`
     background: ${MAP_COLORS.pin};
     border: 2px solid ${MAP_COLORS.casing};
     border-radius: var(--border-radius-md);
-    color: #ffffff;
+    color: ${MAP_COLORS.casing};
   }
 
   .rank {
