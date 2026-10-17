@@ -14,7 +14,7 @@ const style = (Component) => styled(Component)`
   width: 44px;
   height: 44px;
   background: color-mix(in srgb, var(--color-text) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-text) 40%, transparent);
+  border: 1px solid var(--color-control-border);
   border-radius: var(--border-radius-full);
   color: var(--color-text);
   cursor: pointer;
@@ -30,7 +30,7 @@ const style = (Component) => styled(Component)`
   &:hover {
     background: color-mix(in srgb, var(--color-text) 18%, transparent);
     border-color: color-mix(in srgb, var(--color-primary) 60%, transparent);
-    color: var(--color-primary);
+    color: var(--color-primary-text);
   }
 `;
 

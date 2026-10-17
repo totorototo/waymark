@@ -1,6 +1,6 @@
 import styled from "styled-components";
 
-import { field } from "../../theme/controls.js";
+import { field, fold, foldInner } from "../../theme/controls.js";
 import { eyebrow } from "../../theme/type.js";
 
 const style = (Component) => styled(Component)`
@@ -47,10 +47,34 @@ const style = (Component) => styled(Component)`
     color: var(--color-behind-text);
   }
 
-  details summary {
-    margin-bottom: 0.5rem;
+  .fold-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 44px;
+    padding: 0;
+    background: none;
+    border: 0;
+    color: inherit;
+    font: inherit;
     font-size: var(--font-size-small);
     cursor: pointer;
+
+    svg {
+      transition: transform var(--transition-standard);
+    }
+
+    &[aria-expanded="true"] svg {
+      transform: rotate(90deg);
+    }
+  }
+
+  .fold {
+    ${fold}
+  }
+
+  .fold-inner {
+    ${foldInner}
   }
 
   table {
@@ -79,10 +103,6 @@ const style = (Component) => styled(Component)`
   td {
     font-family: var(--font-family-mono);
     white-space: nowrap;
-  }
-
-  tr.late td {
-    color: var(--color-behind-text);
   }
 `;
 

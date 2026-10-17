@@ -81,3 +81,15 @@ export function clickRadius(latitude, zoom) {
   const meters = metersPerPixel(latitude, zoom) * CLICK_RADIUS_PX;
   return Math.min(RADIUS_M_MAX, Math.max(RADIUS_M_MIN, meters));
 }
+
+// A margin to a cutoff as the suite's checkpoint row writes it: 3840 → "1h04", 420 → "0h07",
+// -1440 → "−0h24" (a minus sign, not a hyphen). Past 99h, "99h+": a plan that far off is a
+// wrong date, and the badge already says Over.
+export function formatMargin(seconds) {
+  if (!Number.isFinite(seconds)) return "–";
+  const minutes = Math.round(Math.abs(seconds) / 60);
+  const hours = Math.floor(minutes / 60);
+  const sign = seconds < 0 && minutes > 0 ? "−" : "";
+  if (hours > 99) return `${sign}99h+`;
+  return `${sign}${hours}h${String(minutes % 60).padStart(2, "0")}`;
+}

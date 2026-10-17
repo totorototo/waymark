@@ -1,15 +1,14 @@
 import styled from "styled-components";
 
-// The map's own colours, the same in both themes.
-// why fixed: the outdoors basemap is light in light and dark mode alike, so the route and
-// pins must contrast with the map, not with the page (the dark theme's amber pins sat on
-// an amber line). From Theme.js's light palette: Terminus's orange, its deep blue, its accent.
+import THEME from "../../theme/Theme.js";
+
+// The map's own colours, the same in both themes: Theme.js's map inks (see there).
 export const MAP_COLORS = {
-  route: "#DA7422",
-  casing: "#ffffff",
-  pin: "#2A3AA5",
-  selected: "#D81E5B",
-  label: "#363537",
+  route: THEME.map.route,
+  casing: THEME.map.casing,
+  pin: THEME.map.pin,
+  selected: THEME.map.live,
+  label: THEME.map.label,
 };
 
 const style = (Component) => styled(Component)`
@@ -44,9 +43,9 @@ const style = (Component) => styled(Component)`
     height: 2.25rem;
     padding: 0;
     border-radius: var(--border-radius-base);
-    border: 1px solid color-mix(in srgb, var(--color-text) 15%, transparent);
+    border: 1px solid var(--color-control-border);
     background: color-mix(in srgb, var(--color-background) 70%, transparent);
-    color: color-mix(in srgb, var(--color-text) 75%, transparent);
+    color: var(--color-text-muted);
     cursor: pointer;
     backdrop-filter: blur(6px);
     transition: all var(--transition-fast);
@@ -61,7 +60,7 @@ const style = (Component) => styled(Component)`
     }
 
     &:hover {
-      color: var(--color-primary);
+      color: var(--color-primary-text);
       border-color: color-mix(in srgb, var(--color-primary) 40%, transparent);
     }
   }

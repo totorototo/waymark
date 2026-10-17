@@ -15,7 +15,7 @@ export const chip = css`
   min-height: 44px;
   padding: 0.5rem 1rem;
   background: none;
-  border: 1px solid color-mix(in srgb, var(--color-text) 40%, transparent);
+  border: 1px solid var(--color-control-border);
   border-radius: var(--border-radius-base);
   color: var(--color-text);
   font-family: var(--font-family-mono);
@@ -97,4 +97,33 @@ export const field = css`
   &[aria-invalid="true"] {
     border-color: var(--color-behind-text);
   }
+`;
+
+// A fold that opens and closes (a pin's editor, the Plan's sections): its one grid row goes
+// 0fr → 1fr, so it animates to the content's own height with no measuring. Put the class on
+// the wrapper, `open` while open, and the content in a child with `foldInner`. The global
+// reduced-motion rule shortens it to nothing. Keep FOLD_MS in step with --transition-standard.
+export const FOLD_MS = 300;
+
+export const fold = css`
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--transition-standard),
+    opacity var(--transition-standard);
+
+  &.open {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+`;
+
+// The fold's content: clipped while it opens. The 4px of padding, taken back by the margin,
+// keeps the 2px focus ring (2px offset) of a field at the edge from being clipped.
+export const foldInner = css`
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 4px;
+  margin: 0 -4px;
 `;
