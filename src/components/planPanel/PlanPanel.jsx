@@ -1,13 +1,16 @@
 import { ChevronRight } from "@styled-icons/feather/ChevronRight";
 import { useState } from "react";
 
+import { marginTier, shownMargin } from "../../gpx/planRows.js";
 import { slowestPace } from "../../gpx/review.js";
 import useStore from "../../store/store.js";
 import {
   formatClock,
   formatDuration,
   formatKm,
+  formatMargin,
   formatPace,
+  formatShortClock,
   parsePace,
 } from "../../utils/format.js";
 import style from "./PlanPanel.style.js";
@@ -30,8 +33,31 @@ function summary(checkpoints, timeZone) {
   const tightest = timed.reduce((best, entry) => (entry.margin_s < best.margin_s ? entry : best));
   return {
     late: false,
-    text: `${finishText} Tightest margin ${formatDuration(tightest.margin_s)} at ${tightest.name}.`,
+    text: `${finishText} Tightest spare ${formatMargin(shownMargin(tightest))} at ${tightest.name}.`,
   };
+}
+
+// A table folded under its name, as a pin's editor folds: closed until asked for.
+// why a button and a fold, not <details>: a native details only animates in recent Chrome.
+function Fold({ id, label, children }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        className="fold-toggle"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <ChevronRight size={16} aria-hidden="true" />
+        {label}
+      </button>
+      <div id={id} className={`fold${open ? " open" : ""}`} inert={!open}>
+        <div className="fold-inner">{children}</div>
+      </div>
+    </>
+  );
 }
 
 function PlanPanel({ className }) {
@@ -41,12 +67,14 @@ function PlanPanel({ className }) {
   const settings = useStore((state) => state.settings);
   const timeZone = useStore((state) => state.timeZone);
   const setPace = useStore((state) => state.setPace);
-  const [sectionsOpen, setSectionsOpen] = useState(false);
   const [paceText, setPaceText] = useState(formatPace(settings.pace_base_s_per_km).split(" ")[0]);
 
   const sections = plan?.sections ?? [];
   const checkpoints = plan?.plan ?? [];
   const line = checkpoints.length > 0 ? summary(checkpoints, timeZone) : null;
+  // Clock times on the race's first day read as "08:38"; later days add the weekday.
+  const raceDay = checkpoints[0]?.epoch_s_arrival;
+  const clock = (epoch) => formatShortClock(epoch, timeZone, raceDay);
 
   return (
     <section className={className} aria-label="Plan">
@@ -76,58 +104,72 @@ function PlanPanel({ className }) {
 
       {line && <p className={`summary${line.late ? " late" : ""}`}>{line.text}</p>}
 
-      {/* why folded: the sections are what a director checks once (is a time barrier
-          humane?). Each checkpoint's arrival and margin are on its row in Pins, where the
-          fix is. */}
-      {sections.length > 0 && (
-        <>
-          {/* why a button and a fold, not <details>: a native details only animates in
-              recent Chrome; this one opens like a pin's editor everywhere. */}
-          <button
-            type="button"
-            className="fold-toggle"
-            aria-expanded={sectionsOpen}
-            aria-controls="plan-sections"
-            onClick={() => setSectionsOpen((open) => !open)}
-          >
-            <ChevronRight size={16} aria-hidden="true" />
-            Sections ({sections.length})
-          </button>
-          <div
-            id="plan-sections"
-            className={`fold${sectionsOpen ? " open" : ""}`}
-            inert={!sectionsOpen}
-          >
-            <div className="fold-inner">
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col">Section</th>
-                    <th scope="col">Dist.</th>
-                    <th scope="col">D+</th>
-                    <th scope="col">Allowed</th>
-                    <th scope="col" title="The slowest average pace that still makes the cutoff">
-                      Slowest pace
-                    </th>
+      {/* why folded, and here: Waymark edits the director's file; the plan is a prediction
+          at the pace above, so each checkpoint's arrival and spare sit in the Plan, not on
+          the pins. The sections are what a director checks once (is a time barrier humane?). */}
+      {checkpoints.length > 0 && (
+        <Fold id="plan-checkpoints" label={`Checkpoints (${checkpoints.length})`}>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Checkpoint</th>
+                <th scope="col">Arrives</th>
+                <th scope="col">Cutoff</th>
+                <th
+                  scope="col"
+                  title="Spare at departure: the cutoff minus the planned arrival and stop"
+                >
+                  Spare
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {checkpoints.map((entry, index) => {
+                // The Start's cutoff is the start itself: its spare is always 0.
+                const spare = index === 0 ? null : shownMargin(entry);
+                return (
+                  <tr key={index} className={marginTier(spare) === "over" ? "late" : ""}>
+                    <th scope="row">{entry.name}</th>
+                    <td>{clock(entry.epoch_s_arrival)}</td>
+                    <td>{clock(entry.epoch_s_cutoff)}</td>
+                    <td>{spare === null ? "–" : formatMargin(spare)}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {sections.map((section, index) => (
-                    <tr key={index}>
-                      <th scope="row">
-                        {section.location_start} → {section.location_end}
-                      </th>
-                      <td>{formatKm(section.distance_m)}</td>
-                      <td>{Math.round(section.elevation_gain_m)} m</td>
-                      <td>{formatDuration(section.duration_s_cutoff)}</td>
-                      <td>{formatPace(slowestPace(section))}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
+                );
+              })}
+            </tbody>
+          </table>
+        </Fold>
+      )}
+
+      {sections.length > 0 && (
+        <Fold id="plan-sections" label={`Sections (${sections.length})`}>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Section</th>
+                <th scope="col">Dist.</th>
+                <th scope="col">D+</th>
+                <th scope="col">Allowed</th>
+                <th scope="col" title="The slowest average pace that still makes the cutoff">
+                  Slowest pace
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {sections.map((section, index) => (
+                <tr key={index}>
+                  <th scope="row">
+                    {section.location_start} → {section.location_end}
+                  </th>
+                  <td>{formatKm(section.distance_m)}</td>
+                  <td>{Math.round(section.elevation_gain_m)} m</td>
+                  <td>{formatDuration(section.duration_s_cutoff)}</td>
+                  <td>{formatPace(slowestPace(section))}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Fold>
       )}
     </section>
   );

@@ -141,32 +141,6 @@ const style = (Component) => styled(Component)`
     font-weight: var(--font-weight-bold);
   }
 
-  /* Outlined, no tint: a 14% fill dropped the label under 4.5:1. The word carries the state. */
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.1875rem 0.5rem;
-    border: 1px solid currentColor;
-    border-radius: var(--border-radius-lg);
-    font-family: var(--font-family-mono);
-    font-size: var(--font-size-tiny);
-    font-weight: var(--font-weight-bold);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-
-  .tier-ok {
-    color: var(--color-success-text);
-  }
-
-  .tier-tight {
-    color: var(--color-primary-text);
-  }
-
-  .tier-over {
-    color: var(--color-behind-text);
-  }
-
   .flag {
     display: flex;
     align-self: center;
@@ -175,47 +149,6 @@ const style = (Component) => styled(Component)`
   .index {
     font-family: var(--font-family-mono);
     color: var(--color-text-muted);
-  }
-
-  /* Plan arrives and Spare at departure: value over label. */
-  .figures {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.625rem 1.5rem;
-    padding: 0.75rem;
-    border-radius: var(--border-radius-md);
-    background: color-mix(in srgb, var(--color-text) 3%, transparent);
-  }
-
-  /* The last plan's figures while the next one computes (a few hundred ms after an edit):
-     dimmed as a passed row is, so a stale margin never reads as current. */
-  .is-updating {
-    opacity: 0.55;
-    transition: opacity var(--transition-base);
-  }
-
-  .figure {
-    display: flex;
-    flex-direction: column-reverse;
-    gap: 0.125rem;
-  }
-
-  .figure-label {
-    font-family: var(--font-family-mono);
-    font-size: var(--font-size-tiny);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-  }
-
-  .figure-value {
-    font-family: var(--font-family-mono);
-    font-size: var(--font-size-small);
-    font-weight: var(--font-weight-bold);
-
-    &.is-over {
-      color: var(--color-behind-text);
-    }
   }
 
   .fold {
