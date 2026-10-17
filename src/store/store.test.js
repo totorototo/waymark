@@ -613,7 +613,7 @@ describe("store", () => {
       useStore.getState().toggleTheme();
       const after = useStore.getState().theme;
       expect(after).not.toBe(before);
-      expect(localStorage.getItem("waymark-theme")).toBe(after);
+      expect(JSON.parse(localStorage.getItem("waymark-storage")).state.theme).toBe(after);
       expect(createStore(() => client).getState().theme).toBe(after);
     });
 
@@ -625,8 +625,28 @@ describe("store", () => {
     });
 
     it("starts from a saved zone that no longer exists as the browser's", () => {
-      localStorage.setItem("waymark-timezone", "Mars/Olympus_Mons");
+      localStorage.setItem(
+        "waymark-storage",
+        JSON.stringify({ state: { timeZone: "Mars/Olympus_Mons" }, version: 0 }),
+      );
       expect(createStore(() => client).getState().timeZone).not.toBe("Mars/Olympus_Mons");
+    });
+
+    it("keeps only the preferences, never the file or the pins", async () => {
+      await loaded();
+      useStore.getState().toggleTheme();
+      const { state } = JSON.parse(localStorage.getItem("waymark-storage"));
+      expect(Object.keys(state).sort()).toEqual(["theme", "timeZone"]);
+    });
+
+    it("still switches the theme when storage refuses the write", () => {
+      const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+        throw new DOMException("full", "QuotaExceededError");
+      });
+      const before = useStore.getState().theme;
+      expect(() => useStore.getState().toggleTheme()).not.toThrow();
+      expect(useStore.getState().theme).not.toBe(before);
+      setItem.mockRestore();
     });
   });
 });
