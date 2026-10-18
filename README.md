@@ -3,7 +3,8 @@
 Edit a race director's GPX in the browser. Open the file, click the route to drop pins (they
 snap to the track), or add them at a distance in km. Drag a pin along the route to move it.
 Name each one, give it a type (Start, Time barrier, Life base, Arrival), a cutoff time and a
-stop duration, and export an extended GPX in the format Terminus reads.
+stop duration, and export an extended GPX in the format Terminus and
+[Regimen](https://github.com/totorototo/regimen) read.
 
 - Reading, snapping, planning and writing are all done by [gpxz](https://github.com/totorototo/gpxz),
   compiled to WASM with Zigar and run in a web worker.
@@ -12,10 +13,19 @@ stop duration, and export an extended GPX in the format Terminus reads.
 - Cutoffs are entered on the race's clock (the time zone, above the pins) and saved as UTC.
 - The map opens flat, with a 3D button for the terrain; km labels and chevrons mark the
   distance and the way the race runs. Fullscreen keeps the pins beside the map.
-- Each pin's issues (no cutoff, a cutoff before the previous one) show on its row.
+- A pin's row shows what goes in the file: its number, name, type and km, and the cutoff.
+  Its issues (no cutoff, a cutoff before the previous one) show on the row.
 - The plan panel opens on one line, the estimated finish and the tightest margin (or the
-  cutoffs missed) for a runner's pace, then the arrival against each cutoff, and, folded,
-  per section the distance, D+, the time allowed and the slowest pace that makes it.
+  cutoffs missed) for a runner's pace. Two folds under it: Checkpoints (arrival, cutoff and
+  spare at departure, a missed cutoff marked) and Sections (distance, D+, the time allowed
+  and the slowest pace that makes it).
+- On a phone the map sits in the page's flow: a swipe scrolls the page, two fingers move the
+  map. Fullscreen splits the screen, the map above and the pins below.
+- Installable as a PWA. A new build doesn't take over on its own (the pins live only in
+  memory): the masthead offers it once nothing is unsaved. Mapbox tiles aren't cached.
+- Colours come from the Trail Suite tokens
+  ([`@totorototo/trail-tokens`](https://github.com/totorototo/trail-tokens)) shared with
+  Terminus and Retrace; the map uses the suite's fixed map inks in both themes.
 - A removal or a move can be undone (Undo, or Cmd/Ctrl+Z), and the page asks before unsaved
   edits are lost to a reload or another file.
 
