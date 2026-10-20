@@ -60,3 +60,7 @@ npm run e2e                                   # Playwright: builds, then the app
 
 Netlify, from `main` (`.github/workflows/deploy.yml`). Secrets: `VITE_MAPBOX_KEY` (restrict
 it to the site's URL in Mapbox: it ships in the bundle), `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`.
+
+## License
+
+MIT, see `LICENSE`.
