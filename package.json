@@ -2,6 +2,7 @@
   "name": "waymark",
   "private": true,
   "version": "0.1.0",
+  "license": "MIT",
   "description": "Edit a race director's GPX: pin checkpoints on the map, set their cutoffs, export an extended GPX (Zig/WASM via Zigar).",
   "type": "module",
   "scripts": {
