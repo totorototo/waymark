@@ -5,8 +5,8 @@
     .minimum_zig_version = "0.17.0",
     .dependencies = .{
         .gpxz = .{
-            .url = "git+https://github.com/totorototo/gpxz#0961297829b71eefc02e951ab32510a1784e47bb",
-            .hash = "gpxz-0.1.0-euMO4h5fBQDC8kI04IvtfvpXjcZ4Q8KTg-AaKRIOB9c5",
+            .url = "git+https://github.com/totorototo/gpxz#89bce55ab9674a6b0022b869ef50673e1758feeb",
+            .hash = "gpxz-0.1.0-euMO4vYiBgDNdFLo8Guh4Uz_kCvIlI4LHxMBmKlDq2BX",
         },
     },
     .paths = .{
