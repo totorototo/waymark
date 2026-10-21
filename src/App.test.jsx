@@ -70,6 +70,10 @@ describe("App", () => {
     expect(loadHint("Trace too short")).toMatch(/no track/);
     expect(loadHint("TraceTooShort")).toMatch(/no track/);
     expect(loadHint("Unexpected token")).toMatch(/does not look like a GPX/);
+    // gpxz's input caps: a valid GPX that is too big, not "not a GPX".
+    expect(loadHint("File too large")).toMatch(/over 64 MB/);
+    expect(loadHint("PointsTooMany")).toMatch(/million points/);
+    expect(loadHint("Waypoints too many")).toMatch(/10,000 waypoints/);
   });
 
   it("says which part of the file is missing when gpxz says so", () => {
