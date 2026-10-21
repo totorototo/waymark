@@ -168,9 +168,16 @@ fn geometry_json(
     return json_stringify(output, report);
 }
 
+/// How much farther the match after the previous waypoint may be than the nearest pass
+/// anywhere before the waypoint counts as out of route order in the file.
+pub const out_of_order_m: f64 = 250;
+
 /// Places each waypoint on the trace by gpxz's rule: after the previous one, so a loop
-/// course can't snap back to an earlier pass through the same place. The caller owns the
-/// result.
+/// course can't snap back to an earlier pass through the same place. A director's file can
+/// list its waypoints in any order, though (landmarks added after the Arrival): a waypoint
+/// whose match after the previous one is `out_of_order_m` farther than its nearest pass
+/// takes that pass instead, and leaves the rule's search where it was. The reports come in
+/// route order, as pins must. The caller owns the result.
 fn waypoints_locate(
     allocator: std.mem.Allocator,
     trace: *const gpxz.Trace,
@@ -182,9 +189,13 @@ fn waypoints_locate(
     var search_start: usize = 0;
     for (waypoints, reports) |waypoint, *report| {
         const target = [3]f64{ waypoint.latitude, waypoint.longitude, 0.0 };
-        const closest = trace.closest_point_after(target, search_start) orelse
+        const after = trace.closest_point_after(target, search_start) orelse
             return error.TraceTooShort;
-        search_start = closest.index;
+        // A search from the start can't fail where one from later on didn't.
+        const anywhere = trace.closest_point_after(target, 0).?;
+        const in_order = after.distance_m <= anywhere.distance_m + out_of_order_m;
+        const closest = if (in_order) after else anywhere;
+        if (in_order) search_start = closest.index;
         report.* = .{
             .latitude = waypoint.latitude,
             .longitude = waypoint.longitude,
@@ -200,7 +211,13 @@ fn waypoints_locate(
             .offset_m = closest.distance_m,
         };
     }
+    // Stable, so waypoints at one place keep the file's order.
+    std.mem.sort(WaypointReport, reports, {}, report_before);
     return reports;
+}
+
+fn report_before(_: void, a: WaypointReport, b: WaypointReport) bool {
+    return a.distance_m < b.distance_m;
 }
 
 /// A place on the track a click can land on.
@@ -607,6 +624,73 @@ test "routeGeometry: a malformed file is rejected, not half read" {
         error.ElevationMissing,
         geometry_json(testing.allocator, testing.allocator, bytes),
     );
+}
+
+/// Each waypoint's name and distance along the route, as `routeGeometry` reports them.
+fn waypoints_located(gpx_bytes: []const u8) !std.json.Parsed(std.json.Value) {
+    const json = try geometry_json(testing.allocator, testing.allocator, gpx_bytes);
+    defer testing.allocator.free(json);
+    return parse_json(json);
+}
+
+fn waypoint_distance_m(parsed: std.json.Parsed(std.json.Value), index: usize) f64 {
+    const waypoints = parsed.value.object.get("waypoints").?.array.items;
+    return number(waypoints[index].object.get("distance_m").?);
+}
+
+fn waypoint_name(parsed: std.json.Parsed(std.json.Value), index: usize) []const u8 {
+    const waypoints = parsed.value.object.get("waypoints").?.array.items;
+    return waypoints[index].object.get("name").?.string;
+}
+
+test "routeGeometry: waypoints out of route order in the file sit where they are" {
+    // 2.2 km north along longitude 0, then 1.6 km east along latitude 42.02. The file
+    // lists the far end first, then the start and the corner, as a director's landmarks.
+    const gpx_bytes =
+        "<gpx version=\"1.1\">" ++
+        "<wpt lat=\"42.02\" lon=\"0.02\"><ele>1000</ele><name>East</name></wpt>" ++
+        "<wpt lat=\"42.0\" lon=\"0.0\"><ele>1000</ele><name>South</name></wpt>" ++
+        "<wpt lat=\"42.02\" lon=\"0.0\"><ele>1000</ele><name>Corner</name></wpt>" ++
+        "<trk><trkseg>" ++
+        "<trkpt lat=\"42.0\" lon=\"0.0\"><ele>1000</ele></trkpt>" ++
+        "<trkpt lat=\"42.01\" lon=\"0.0\"><ele>1100</ele></trkpt>" ++
+        "<trkpt lat=\"42.02\" lon=\"0.0\"><ele>1200</ele></trkpt>" ++
+        "<trkpt lat=\"42.02\" lon=\"0.01\"><ele>1100</ele></trkpt>" ++
+        "<trkpt lat=\"42.02\" lon=\"0.02\"><ele>1000</ele></trkpt>" ++
+        "</trkseg></trk></gpx>";
+    const parsed = try waypoints_located(gpx_bytes);
+    defer parsed.deinit();
+
+    // Route order, each at its own place rather than at the end after "East".
+    try testing.expectEqualStrings("South", waypoint_name(parsed, 0));
+    try testing.expectEqualStrings("Corner", waypoint_name(parsed, 1));
+    try testing.expectEqualStrings("East", waypoint_name(parsed, 2));
+    try testing.expectEqual(@as(f64, 0), waypoint_distance_m(parsed, 0));
+    try testing.expectApproxEqAbs(@as(f64, 2224), waypoint_distance_m(parsed, 1), 30);
+    try testing.expectApproxEqAbs(@as(f64, 3856), waypoint_distance_m(parsed, 2), 30);
+}
+
+test "routeGeometry: a place passed twice, listed in route order, keeps its second pass" {
+    const track = try out_and_back_build(testing.allocator);
+    defer testing.allocator.free(track);
+    const waypoints =
+        "<gpx version=\"1.1\">" ++
+        "<wpt lat=\"42.0\" lon=\"0.0\"><ele>1000</ele><name>Start</name></wpt>" ++
+        "<wpt lat=\"42.02\" lon=\"0.0\"><ele>1020</ele><name>Turn</name></wpt>" ++
+        "<wpt lat=\"42.0\" lon=\"0.0\"><ele>1000</ele><name>Home</name></wpt>";
+    const gpx_bytes = try std.mem.concat(
+        testing.allocator,
+        u8,
+        &.{ waypoints, track["<gpx version=\"1.1\">".len..] },
+    );
+    defer testing.allocator.free(gpx_bytes);
+    const parsed = try waypoints_located(gpx_bytes);
+    defer parsed.deinit();
+
+    try testing.expectEqualStrings("Home", waypoint_name(parsed, 2));
+    try testing.expectEqual(@as(f64, 0), waypoint_distance_m(parsed, 0));
+    try testing.expectApproxEqAbs(@as(f64, 2224), waypoint_distance_m(parsed, 1), 30);
+    try testing.expectApproxEqAbs(@as(f64, 4448), waypoint_distance_m(parsed, 2), 30);
 }
 
 test "snapCandidates: a click beside the track lands on it" {
