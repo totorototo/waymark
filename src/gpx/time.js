@@ -90,6 +90,23 @@ export function epochToZoned(epochSeconds, timeZone) {
   return `${pad(year, 4)}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}`;
 }
 
+// The race clock's offset from UTC at `epochSeconds`, in seconds (7200 for Paris in summer):
+// what gpxz writes after a time ("+02:00") and reads to put the night on the local clock.
+// Taken at each instant, so a race across a daylight-saving change gets both offsets.
+export function utcOffsetSeconds(epochSeconds, timeZone) {
+  if (!Number.isFinite(epochSeconds)) return 0;
+  return Math.round(offsetMs(epochSeconds * 1000, timeZone) / 60_000) * 60;
+}
+
+// The pins as gpxz writes them: each timed one with its offset on the race's clock.
+export function pinsWithOffsets(pins, timeZone) {
+  return pins.map((pin) =>
+    Number.isFinite(pin.epoch_s)
+      ? { ...pin, utc_offset_s: utcOffsetSeconds(pin.epoch_s, timeZone) }
+      : pin,
+  );
+}
+
 // 1787281200 → "2026-08-21T03:00:00Z": the form the GPX files use.
 export function epochToUtc(epochSeconds) {
   if (!Number.isFinite(epochSeconds)) return "";

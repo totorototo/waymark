@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { pinsWithOffsets } from "../gpx/time.js";
 import { createStore, editedFileName, PLACE_RADIUS_M, PLAN_DELAY_MS } from "./store.js";
 
 // What the file holds is gpxz's business: the store only passes the bytes along.
@@ -82,11 +83,13 @@ describe("store", () => {
       expect(state.planStatus).toBe("ready");
     });
 
-    it("plans the pins, with the pace settings", async () => {
+    it("plans the pins on the race's clock, with the pace settings", async () => {
       await useStore.getState().loadBuffer("race.gpx", GPX);
       const [pins, settings] = client.plan.mock.calls[0];
-      expect(pins).toEqual(useStore.getState().pins);
-      expect(settings).toEqual(useStore.getState().settings);
+      const state = useStore.getState();
+      // Each timed pin with its offset, so gpxz puts the night on the local clock.
+      expect(pins).toEqual(pinsWithOffsets(state.pins, state.timeZone));
+      expect(settings).toEqual(state.settings);
     });
 
     it("reports a file the Zig side rejects", async () => {
@@ -568,6 +571,27 @@ describe("store", () => {
       expect(pins.map((pin) => pin.distance_m)).toEqual([0, 5000]);
       expect(file.bytes).toEqual(new Uint8Array([60, 103, 112, 120, 62]));
       expect(file.name).toBe("race-edited.gpx");
+    });
+
+    it("writes each time with the race clock's offset", async () => {
+      await loaded();
+      useStore.getState().setTimeZone("Europe/Paris");
+      // 2026-08-21T03:00:00Z: 05:00 in Paris, summer time.
+      useStore.getState().updatePin(useStore.getState().pins[0].id, { epoch_s: 1787281200 });
+      await useStore.getState().exportFile();
+      const [pins] = client.exportGpx.mock.calls.at(-1);
+      expect(pins[0].utc_offset_s).toBe(7200);
+      expect(useStore.getState().pins[0]).not.toHaveProperty("utc_offset_s");
+    });
+
+    it("replans when the race's time zone changes: the night moves with the clock", async () => {
+      await loaded();
+      vi.useFakeTimers();
+      const before = client.plan.mock.calls.length;
+      useStore.getState().setTimeZone("America/Denver");
+      await vi.runAllTimersAsync();
+      vi.useRealTimers();
+      expect(client.plan.mock.calls.length).toBe(before + 1);
     });
 
     it("clears the unsaved mark only when asked to", async () => {

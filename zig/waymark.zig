@@ -423,6 +423,9 @@ const Pin = struct {
     symbol: ?[]const u8 = null,
     type_name: ?[]const u8 = null,
     epoch_s: ?i64 = null,
+    /// The race clock's offset at `epoch_s`, written after the time ("+02:00"): gpxz puts the
+    /// night on the start's local clock. Whole minutes within ±14:00; 0 writes UTC ("Z").
+    utc_offset_s: i32 = 0,
     stop_s: ?u32 = null,
     /// Along the route, as gpxz measures it: the pins must come in this order.
     distance_m: f64,
@@ -450,6 +453,10 @@ fn edited_bytes(
     const pins = parsed.value;
     if (pins.len > pins_max) return error.TooManyPins;
     for (pins, 0..) |pin, index| {
+        const offset_s = pin.utc_offset_s;
+        if (@abs(offset_s) > gpxz.time.utc_offset_s_max or @mod(offset_s, 60) != 0) {
+            return error.TimeZoneInvalid;
+        }
         if (!std.math.isFinite(pin.distance_m)) return error.PinsNotInRouteOrder;
         if (index > 0 and pin.distance_m < pins[index - 1].distance_m) {
             return error.PinsNotInRouteOrder;
@@ -469,6 +476,7 @@ fn edited_bytes(
             .symbol = pin.symbol,
             .type_name = pin.type_name,
             .epoch_s = pin.epoch_s,
+            .utc_offset_s = pin.utc_offset_s,
             .stop_s = pin.stop_s,
         };
     }
@@ -917,6 +925,40 @@ test "exportGpx: a new pin is a new checkpoint, and an edit moves a cutoff" {
     try testing.expectEqualStrings("B <&> C", again.waypoints[1].name);
     try testing.expectEqual(@as(?u32, 600), again.waypoints[1].stop_s);
     try testing.expectEqualStrings("Soup", again.waypoints[1].description.?);
+}
+
+test "exportGpx: a time keeps the race's offset, and reads back on the same clock" {
+    const json =
+        \\[{"latitude":42.73,"longitude":-0.01,"name":"A","type_name":"Start",
+        \\  "epoch_s":1780725600,"utc_offset_s":7200,"distance_m":0},
+        \\ {"latitude":42.7838987,"longitude":-0.01,"name":"D","type_name":"Arrival",
+        \\  "epoch_s":1780740000,"distance_m":6000}]
+    ;
+    const out = try edited_bytes(testing.allocator, testing.allocator, fixture_gpx, json);
+    defer testing.allocator.free(out);
+    // 1780725600 is 06:00Z: 08:00 at UTC+2. A pin without an offset stays in UTC.
+    try testing.expect(std.mem.indexOf(u8, out, "<time>2026-06-06T08:00:00+02:00</time>") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "<time>2026-06-06T10:00:00Z</time>") != null);
+    var data = try gpxz.parse(testing.allocator, out, &default_settings);
+    defer data.deinit(testing.allocator);
+    try testing.expectEqual(@as(?i64, 1780725600), data.waypoints[0].epoch_s);
+    try testing.expectEqual(@as(i32, 7200), data.waypoints[0].utc_offset_s);
+}
+
+test "exportGpx: an offset past 14:00 or not in whole minutes is refused" {
+    for ([_][]const u8{ "50460", "-50460", "7230" }) |offset| {
+        const json = try std.fmt.allocPrint(
+            testing.allocator,
+            "[{{\"latitude\":42.73,\"longitude\":-0.01,\"epoch_s\":1780725600," ++
+                "\"utc_offset_s\":{s},\"distance_m\":0}}]",
+            .{offset},
+        );
+        defer testing.allocator.free(json);
+        try testing.expectError(
+            error.TimeZoneInvalid,
+            edited_bytes(testing.allocator, testing.allocator, fixture_gpx, json),
+        );
+    }
 }
 
 test "exportGpx: pins out of route order are refused" {

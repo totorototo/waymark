@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { epochToUtc, epochToZoned, isValidTimeZone, timeZones, zonedToEpoch } from "./time.js";
+import {
+  epochToUtc,
+  epochToZoned,
+  isValidTimeZone,
+  pinsWithOffsets,
+  timeZones,
+  utcOffsetSeconds,
+  zonedToEpoch,
+} from "./time.js";
 
 // The GRP 2026 start: 03:00Z, which is 05:00 in Paris (UTC+2 in August).
 const START = Date.UTC(2026, 7, 21, 3, 0, 0) / 1000;
@@ -86,5 +94,36 @@ describe("time zones", () => {
     expect(isValidTimeZone("Europe/Paris")).toBe(true);
     expect(isValidTimeZone("Mars/Olympus_Mons")).toBe(false);
     expect(timeZones()).toContain("Europe/Paris");
+  });
+});
+
+describe("utcOffsetSeconds", () => {
+  // 2026-08-21T03:00:00Z and 2026-01-15T03:00:00Z.
+  const summer = 1787281200;
+  const winter = 1768446000;
+
+  it("is the race clock's offset at that instant, daylight saving included", () => {
+    expect(utcOffsetSeconds(summer, "Europe/Paris")).toBe(7200);
+    expect(utcOffsetSeconds(winter, "Europe/Paris")).toBe(3600);
+    expect(utcOffsetSeconds(summer, "America/Denver")).toBe(-21600);
+    expect(utcOffsetSeconds(summer, "Asia/Kolkata")).toBe(19800);
+    expect(utcOffsetSeconds(summer, "UTC")).toBe(0);
+  });
+
+  it("is 0 without a time", () => {
+    expect(utcOffsetSeconds(null, "Europe/Paris")).toBe(0);
+  });
+});
+
+describe("pinsWithOffsets", () => {
+  it("gives each timed pin its offset, and leaves the others alone", () => {
+    const pins = [
+      { id: 1, epoch_s: 1787281200, distance_m: 0 },
+      { id: 2, epoch_s: null, distance_m: 100 },
+    ];
+    const zoned = pinsWithOffsets(pins, "Europe/Paris");
+    expect(zoned[0]).toEqual({ ...pins[0], utc_offset_s: 7200 });
+    expect(zoned[1]).toBe(pins[1]);
+    expect(pins[0]).not.toHaveProperty("utc_offset_s");
   });
 });

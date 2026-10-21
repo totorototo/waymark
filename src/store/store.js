@@ -11,7 +11,7 @@ import {
 } from "../gpx/checkpoints.js";
 import { pinFromWaypoint } from "../gpx/pins.js";
 import { planReview } from "../gpx/review.js";
-import { browserTimeZone, isValidTimeZone } from "../gpx/time.js";
+import { browserTimeZone, isValidTimeZone, pinsWithOffsets } from "../gpx/time.js";
 import { createWorkerClient } from "../worker/client.js";
 
 // The pace model's settings (gpxz's defaults). They only drive the estimates shown beside the
@@ -95,13 +95,15 @@ export const createStore = (getClient = createWorkerClient) => {
     // The plan of the file the pins would make, written unless a newer edit or file has made
     // it stale.
     async function computePlan() {
-      const { geometry, pins, settings } = get();
+      const { geometry, pins, settings, timeZone } = get();
       if (geometry === null) return;
       const mine = generation;
       const run = ++planRun;
       set({ planStatus: "computing" });
       try {
-        const plan = await worker().plan(pins, settings);
+        // why: gpxz puts the night slowdown on the start's local clock, so the plan, like
+        // the file, takes the race's offsets.
+        const plan = await worker().plan(pinsWithOffsets(pins, timeZone), settings);
         if (mine !== generation || run !== planRun) return;
         set({ plan, planError: null, planStatus: "ready" });
       } catch (err) {
@@ -190,6 +192,8 @@ export const createStore = (getClient = createWorkerClient) => {
       setTimeZone: (timeZone) => {
         if (!isValidTimeZone(timeZone)) return;
         set({ timeZone });
+        // The night moves with the clock: the plan's times do too.
+        schedulePlan();
       },
 
       status: "idle", // "idle" | "loading" | "ready" | "error"
@@ -473,8 +477,9 @@ export const createStore = (getClient = createWorkerClient) => {
       // `markSaved` clears the unsaved mark, if no edit came in meanwhile: only for a save
       // the person clicked. A download the page starts on its own may be blocked unseen.
       async exportFile({ markSaved = false } = {}) {
-        const { pins } = get();
-        const bytes = await worker().exportGpx(pins);
+        const { pins, timeZone } = get();
+        // Each time with its offset, so the file says what clock the race runs on.
+        const bytes = await worker().exportGpx(pinsWithOffsets(pins, timeZone));
         if (markSaved && get().pins === pins) set({ dirty: false });
         return { name: editedFileName(get().fileName), bytes };
       },
