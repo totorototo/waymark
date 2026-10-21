@@ -21,6 +21,12 @@ const LOAD_HINTS = {
     "The file has no track, or too few points to make one. Is it a route with a <trk>?",
   ElevationMissing:
     "The track has no elevation, which the plan needs. Export it again with elevation from the app or watch that recorded it.",
+  // gpxz's caps on untrusted input (gpx.zig bytes_max, points_max, waypoints_max).
+  FileTooLarge: "The file is over 64 MB, more than any race route needs.",
+  PointsTooMany:
+    "The track has over a million points, far more than any race needs. Simplify it and export it again.",
+  WaypointsTooMany:
+    "The file has over 10,000 waypoints, more than any race has. Is it a course, or a waypoint library?",
 };
 const LOAD_HINT_DEFAULT =
   "It does not look like a GPX file with a track. Try exporting it again as GPX from the app that made it.";
