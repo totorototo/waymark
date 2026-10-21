@@ -63,12 +63,13 @@ test("adds a pin at a km, sets its cutoff, and exports it in route order", async
     page.waitForEvent("download"),
     page.getByRole("button", { name: "Export GPX" }).click(),
   ]);
-  // 11:00 in Paris is 09:00 UTC, as the file carries it.
+  // 11:00 in Paris, written on the race's clock with its offset: the file says the race runs
+  // at UTC+2, so gpxz puts the night slowdown on that clock.
   expect(waypoints(await readDownload(download))).toEqual([
-    { name: "Start", type: "Start", time: "2026-06-06T06:00:00Z" },
-    { name: "Refuge", type: "TimeBarrier", time: "2026-06-06T08:00:00Z" },
-    { name: "Checkpoint 1", type: "TimeBarrier", time: "2026-06-06T09:00:00Z" },
-    { name: "Finish", type: "Arrival", time: "2026-06-06T10:00:00Z" },
+    { name: "Start", type: "Start", time: "2026-06-06T08:00:00+02:00" },
+    { name: "Refuge", type: "TimeBarrier", time: "2026-06-06T10:00:00+02:00" },
+    { name: "Checkpoint 1", type: "TimeBarrier", time: "2026-06-06T11:00:00+02:00" },
+    { name: "Finish", type: "Arrival", time: "2026-06-06T12:00:00+02:00" },
   ]);
   await expect(page.getByText("Unsaved changes")).toBeHidden();
 });

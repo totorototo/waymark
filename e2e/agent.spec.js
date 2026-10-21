@@ -2,6 +2,10 @@ import { expect, test } from "@playwright/test";
 
 import { fixtureText, offline, readDownload } from "./helpers.js";
 
+// The cutoffs here are given in UTC ("…Z"), and the file is written on the race's clock: run
+// in UTC, so the export is the same on every machine.
+test.use({ timezoneId: "UTC" });
+
 // Stands in for the browser's agent: a document.modelContext that keeps what the page
 // registers, so the test can call the tools as an agent would. Same calls as the spec's:
 // registerTool(tool, { signal }), unregistered when the signal aborts.
