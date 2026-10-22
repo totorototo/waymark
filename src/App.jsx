@@ -105,7 +105,7 @@ export default function App() {
         {status === "idle" && (
           <div className={`start${dragging ? " dragging" : ""}`}>
             <span className="eyebrow">Checkpoints and cutoffs</span>
-            <h1 className="title">A race&apos;s GPX, pinned and timed</h1>
+            <h2 className="title">A race&apos;s GPX, pinned and timed</h2>
             <p className="lede">
               Open the race director&apos;s GPX, pin the checkpoints on the route, set their
               cutoffs, and export the file with them.
@@ -121,7 +121,7 @@ export default function App() {
         {status === "error" && (
           <div className={`start${dragging ? " dragging" : ""}`} role="alert">
             <span className="eyebrow">Open GPX</span>
-            <h1 className="title">This file could not be read</h1>
+            <h2 className="title">This file could not be read</h2>
             <p className="lede">{loadHint(error)}</p>
             <div className="ledger">
               <OpenFile className="ledger-row">Open another GPX</OpenFile>

@@ -178,13 +178,9 @@ export const Layout = styled.div`
      keyboard up to name a pin nearly all of it, the fields scrolling under it. A map in the
      flow scrolls away while typing; fullscreen is the map-and-pins view, split below. */
   @media (max-width: 52em) {
+    /* The start page keeps the suite's gutter, on the masthead's edge. */
     main {
-      padding: 0 0.5rem;
-    }
-
-    /* On the masthead's edge: the toolbar keeps its 1rem gutter. */
-    .start {
-      padding-inline: 0.5rem;
+      padding: 0 ${(props) => (props.$start ? "var(--start-inset)" : "0.5rem")};
     }
 
     .workspace {
