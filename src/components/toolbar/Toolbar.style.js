@@ -11,9 +11,11 @@ const style = (Component) => styled(Component)`
   /* Clear of the theme toggle fixed in the top-right corner. */
   padding: 1rem calc(1.25rem + 44px + 1rem) 1rem var(--gutter-tool);
 
-  /* On the start page, the masthead heads the centred column (App.style.js). */
+  /* On the start page, the masthead heads the centred column (App.style.js), level with the
+     theme toggle (1.25rem down, 44px high) as the other apps' start, the name its h1. */
   &.is-start {
-    padding-left: var(--start-inset);
+    padding: calc(env(safe-area-inset-top, 0px) + 1.25rem) calc(1.25rem + 44px + 1rem) 0
+      var(--start-inset);
   }
 
   button {

@@ -33,14 +33,14 @@ function Toolbar({ className }) {
   if (status === "idle" || status === "error") {
     return (
       <header className={`${className} is-start`}>
-        <span className="brand">
+        <h1 className="brand">
           <svg className="mark" viewBox="0 0 64 64" aria-hidden="true">
             <path d={MARK_PATH} fillRule="evenodd" />
           </svg>
           <span>
             <span className="brand-way">way</span>mark
           </span>
-        </span>
+        </h1>
         <UpdateNotice className="update" />
       </header>
     );
