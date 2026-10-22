@@ -32,7 +32,7 @@ function Toolbar({ className }) {
   // one: nothing to show here but the name.
   if (status === "idle" || status === "error") {
     return (
-      <header className={className}>
+      <header className={`${className} is-start`}>
         <span className="brand">
           <svg className="mark" viewBox="0 0 64 64" aria-hidden="true">
             <path d={MARK_PATH} fillRule="evenodd" />

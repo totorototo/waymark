@@ -91,6 +91,7 @@ export default function App() {
     <Layout
       // The start page marks its ledger as the drop target; the editor, the whole page.
       $dragging={dragging && status === "ready"}
+      $start={status === "idle" || status === "error"}
       onDragOver={(event) => {
         event.preventDefault();
         setDragging(true);

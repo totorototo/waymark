@@ -9,13 +9,16 @@ export const Layout = styled.div`
   min-height: 100vh;
   outline: ${(props) => (props.$dragging ? "3px dashed var(--color-primary)" : "none")};
   outline-offset: -6px;
+  /* The start page's column: the measure, centred, never closer to the edge than the gutter.
+     The toolbar's masthead reads it too, so the mark sits over the eyebrow. */
+  --start-inset: max(var(--gutter), (100% - var(--measure)) / 2);
 
   main {
     display: flex;
     flex: 1;
     flex-direction: column;
     min-height: 0;
-    padding: 0 1rem;
+    padding: 0 ${(props) => (props.$start ? "var(--start-inset)" : "var(--gutter-tool)")};
   }
 
   /* The page before a file is open, or after one could not be read: Terminus's start (an
@@ -24,7 +27,7 @@ export const Layout = styled.div`
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    max-width: 40rem;
+    max-width: var(--measure);
     padding: clamp(3rem, 12vh, 6rem) 0 3rem;
   }
 
