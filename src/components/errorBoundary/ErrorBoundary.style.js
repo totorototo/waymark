@@ -8,9 +8,9 @@ export const Fallback = styled.p`
   color: color-mix(in srgb, var(--color-text) 85%, transparent);
 
   &.section-fallback {
-    max-width: 46rem;
+    max-width: var(--measure);
     margin: 0 auto;
-    padding: 3rem clamp(1.5rem, 6vw, 4rem);
+    padding: 3rem var(--gutter);
   }
 
   &.panel-fallback {
