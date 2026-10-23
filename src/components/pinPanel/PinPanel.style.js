@@ -8,8 +8,8 @@ const style = (Component) => styled(Component)`
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
   }
 
   h2 {
@@ -25,9 +25,9 @@ const style = (Component) => styled(Component)`
   .undo {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    margin-bottom: 0.5rem;
-    padding: 0.375rem 0.5rem;
+    gap: var(--space-1);
+    margin-bottom: var(--space-2);
+    padding: var(--space-2) var(--space-2);
     background: var(--color-surface);
     border-radius: var(--border-radius-sm);
     font-size: var(--font-size-small);
@@ -41,8 +41,8 @@ const style = (Component) => styled(Component)`
   .issues {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
-    margin-bottom: 0.5rem;
+    gap: var(--space-1);
+    margin-bottom: var(--space-2);
     list-style: none;
     font-size: var(--font-size-tiny);
   }
@@ -84,10 +84,10 @@ const style = (Component) => styled(Component)`
   .row {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: var(--space-3);
     width: 100%;
     min-height: 44px;
-    padding: 1rem 0;
+    padding: var(--space-4) 0;
     background: none;
     border: 0;
     color: inherit;
@@ -100,7 +100,7 @@ const style = (Component) => styled(Component)`
     display: grid;
     grid-template-columns: 1.5rem 1fr auto 1rem;
     align-items: baseline;
-    gap: 0.5rem;
+    gap: var(--space-2);
   }
 
   .label {
@@ -121,7 +121,7 @@ const style = (Component) => styled(Component)`
   }
 
   .meta {
-    margin-top: 0.25rem;
+    margin-top: var(--space-1);
     font-family: var(--font-family-mono);
     font-size: var(--font-size-small);
     color: var(--color-text-muted);
@@ -131,7 +131,7 @@ const style = (Component) => styled(Component)`
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 0.375rem;
+    gap: var(--space-2);
     white-space: nowrap;
   }
 
@@ -162,14 +162,14 @@ const style = (Component) => styled(Component)`
   .editor {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    padding: 0 0 1rem;
+    gap: var(--space-2);
+    padding: 0 0 var(--space-4);
   }
 
   label {
     display: flex;
     flex-direction: column;
-    gap: 0.125rem;
+    gap: var(--space-hair);
     font-size: var(--font-size-tiny);
     color: var(--color-text-muted);
   }
@@ -183,7 +183,7 @@ const style = (Component) => styled(Component)`
   .cutoff {
     display: flex;
     flex-direction: column;
-    gap: 0.125rem;
+    gap: var(--space-hair);
     padding: 0;
     border: 0;
     font-size: var(--font-size-tiny);
@@ -192,28 +192,28 @@ const style = (Component) => styled(Component)`
 
   .cutoff legend {
     padding: 0;
-    margin-bottom: 0.125rem;
+    margin-bottom: var(--space-hair);
   }
 
   .cutoff div {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 7rem);
-    gap: 0.375rem;
+    gap: var(--space-2);
   }
 
   /* The route's setting, not a pin's: labelled as a section, above the pins. */
   .clock {
     ${eyebrow}
-    gap: 0.375rem;
-    margin-bottom: 0.75rem;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
   }
 
   .add {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
   }
 
   .add label {
@@ -249,9 +249,9 @@ const style = (Component) => styled(Component)`
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-    padding: 0.5rem;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+    padding: var(--space-2);
     background: var(--color-surface);
     border: 1px solid var(--color-accent-text);
     border-radius: var(--border-radius-sm);

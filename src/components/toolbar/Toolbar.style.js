@@ -7,15 +7,16 @@ const style = (Component) => styled(Component)`
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
   /* Clear of the theme toggle fixed in the top-right corner. */
-  padding: 1rem calc(1.25rem + 44px + 1rem) 1rem var(--gutter-tool);
+  padding: var(--space-4) calc(var(--space-5) + var(--touch-target) + var(--space-4)) var(--space-4)
+    var(--gutter-tool);
 
   /* On the start page, the masthead heads the centred column (App.style.js), level with the
      theme toggle (1.25rem down, 44px high) as the other apps' start, the name its h1. */
   &.is-start {
-    padding: calc(env(safe-area-inset-top, 0px) + 1.25rem) calc(1.25rem + 44px + 1rem) 0
-      var(--start-inset);
+    padding: calc(env(safe-area-inset-top, 0px) + var(--space-5))
+      calc(var(--space-5) + var(--touch-target) + var(--space-4)) 0 var(--start-inset);
   }
 
   button {
@@ -33,7 +34,7 @@ const style = (Component) => styled(Component)`
     ${wordmark}
     display: flex;
     align-items: center;
-    gap: 0.625rem;
+    gap: var(--space-3);
     min-height: 44px;
   }
 
@@ -57,7 +58,7 @@ const style = (Component) => styled(Component)`
   .doc {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: var(--space-3);
     min-width: 0;
   }
 
@@ -73,7 +74,7 @@ const style = (Component) => styled(Component)`
 
   .unsaved {
     flex-shrink: 0;
-    padding: 0.125rem 0.5rem;
+    padding: var(--space-hair) var(--space-2);
     border: 1px solid var(--color-secondary-text);
     border-radius: var(--border-radius-sm);
     color: var(--color-secondary-text);
@@ -90,8 +91,8 @@ const style = (Component) => styled(Component)`
     flex-basis: 100%;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
     background: var(--color-surface);
     border: 1px solid var(--color-accent-text);
     border-radius: var(--border-radius-sm);
@@ -108,9 +109,9 @@ const style = (Component) => styled(Component)`
 
   /* A phone: Open and Export on the first line, the file's name under them. */
   @media (max-width: 52em) {
-    gap: 0.5rem;
+    gap: var(--space-2);
     /* The toggle sits 1rem in on a phone (ThemeToggle.style.js). */
-    padding-right: calc(1rem + 44px + 0.5rem);
+    padding-right: calc(var(--space-4) + var(--touch-target) + var(--space-2));
 
     .doc {
       order: 1;
@@ -129,7 +130,7 @@ const style = (Component) => styled(Component)`
      them, and keeping both put Export on a line of its own under 376 px. */
   @media (max-width: 23.5em) {
     button {
-      padding-inline: 0.75rem;
+      padding-inline: var(--space-3);
     }
 
     button > svg {

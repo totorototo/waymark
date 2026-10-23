@@ -11,9 +11,9 @@ export const chip = css`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.375rem;
+  gap: var(--space-2);
   min-height: 44px;
-  padding: 0.5rem 1rem;
+  padding: var(--space-2) var(--space-4);
   background: none;
   border: 1px solid var(--color-control-border);
   border-radius: var(--border-radius-base);
@@ -80,7 +80,7 @@ export const textButton = css`
 // Inputs, selects and textareas: lighter than the cards, 44px tall. Terminus's corner.
 export const field = css`
   min-height: 44px;
-  padding: 0.375rem 0.625rem;
+  padding: var(--space-2) var(--space-3);
   background: var(--color-field);
   border: 1px solid var(--color-field-border);
   border-radius: var(--border-radius-sm);
@@ -124,6 +124,6 @@ export const fold = css`
 export const foldInner = css`
   min-height: 0;
   overflow: hidden;
-  padding: 0 4px;
-  margin: 0 -4px;
+  padding: 0 var(--space-1);
+  margin: 0 calc(-1 * var(--space-1));
 `;
