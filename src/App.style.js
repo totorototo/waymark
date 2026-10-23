@@ -43,6 +43,7 @@ export const Layout = styled.div`
     letter-spacing: -0.04em;
     line-height: 1;
     max-width: 16ch;
+    text-wrap: balance;
     margin-bottom: var(--space-4);
   }
 
