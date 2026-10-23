@@ -22,9 +22,20 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      playwright: ${{ steps.playwright.outputs.version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+
+      # The e2e job runs in the Playwright image of this exact version, as Terminus's: browsers
+      # and system libraries come baked in, so no apt step (it hung for 37 and 47 minutes in
+      # Terminus), and a lockfile bump moves the image with it.
+      - name: Read the Playwright version
+        id: playwright
+        run: >-
+          echo "version=$(node -p "require('./package-lock.json')
+          .packages['node_modules/@playwright/test'].version")" >> "$GITHUB_OUTPUT"
 
       - name: Install Zig 0.17.0
         uses: mlugg/setup-zig@v2
@@ -82,6 +93,10 @@ jobs:
   e2e:
     needs: build
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.build.outputs.playwright }}-noble
+    # Fail a hang instead, and rerun the failed job.
+    timeout-minutes: 20
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -101,22 +116,6 @@ jobs:
       - name: Install dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci
-
-      - name: Cache Playwright browsers
-        uses: actions/cache@v5
-        id: cache-playwright
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ hashFiles('package-lock.json') }}
-
-      - name: Install Playwright Chromium
-        if: steps.cache-playwright.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
-
-      # A cached browser still needs the runner's system libraries.
-      - name: Install Playwright system dependencies
-        if: steps.cache-playwright.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
 
       - name: Download build artifact
         uses: actions/download-artifact@v5
