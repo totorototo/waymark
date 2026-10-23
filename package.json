@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@styled-icons/feather": "10.47.0",
-    "@totorototo/trail-tokens": "github:totorototo/trail-tokens#v1.3.0",
+    "@totorototo/trail-tokens": "github:totorototo/trail-tokens#v1.5.0",
     "mapbox-gl": "3.25.0",
     "react": "19.2.1",
     "react-dom": "19.2.1",

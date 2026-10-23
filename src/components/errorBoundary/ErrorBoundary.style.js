@@ -10,7 +10,7 @@ export const Fallback = styled.p`
   &.section-fallback {
     max-width: var(--measure);
     margin: 0 auto;
-    padding: 3rem var(--gutter);
+    padding: var(--space-12) var(--gutter);
   }
 
   &.panel-fallback {
@@ -18,7 +18,7 @@ export const Fallback = styled.p`
     align-items: center;
     justify-content: center;
     height: 100%;
-    padding: 1.5rem;
+    padding: var(--space-6);
     text-align: center;
   }
 `;

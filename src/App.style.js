@@ -28,12 +28,12 @@ export const Layout = styled.div`
     flex-direction: column;
     align-items: flex-start;
     max-width: var(--measure);
-    padding: clamp(3rem, 12vh, 6rem) 0 3rem;
+    padding: var(--start-gap) 0 var(--space-12);
   }
 
   .start .eyebrow {
     ${eyebrow}
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-4);
   }
 
   .start .title {
@@ -43,18 +43,18 @@ export const Layout = styled.div`
     letter-spacing: -0.04em;
     line-height: 1;
     max-width: 16ch;
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-4);
   }
 
   .start .lede {
-    max-width: 38ch;
-    margin-bottom: 2.5rem;
+    max-width: var(--measure-lede);
+    margin-bottom: var(--space-10);
     color: var(--color-text-muted);
   }
 
   .start .ledger {
     width: 100%;
-    max-width: 28rem;
+    max-width: var(--measure-list);
     border-top: 1px solid var(--color-hairline);
   }
 
@@ -67,10 +67,10 @@ export const Layout = styled.div`
   .start .ledger-row {
     display: flex;
     align-items: center;
-    gap: 0.875rem;
+    gap: var(--space-4);
     width: 100%;
     min-height: 44px;
-    padding: 1rem 0;
+    padding: var(--space-4) 0;
     background: none;
     border: 0;
     border-bottom: 1px solid var(--color-hairline);
@@ -100,19 +100,19 @@ export const Layout = styled.div`
 
   /* Clear of the drop outline, 0.75rem out from the ledger. */
   .start .drop {
-    margin-top: 1.25rem;
+    margin-top: var(--space-5);
   }
 
   .start .note {
     max-width: 40ch;
-    margin-top: 2rem;
+    margin-top: var(--space-8);
   }
 
   .workspace {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 24rem;
     grid-template-rows: minmax(0, 1fr);
-    gap: 1rem;
+    gap: var(--space-4);
     flex: 1;
     min-height: 480px;
   }
@@ -126,8 +126,8 @@ export const Layout = styled.div`
     }
 
     &:has(.workspace) footer {
-      padding-top: 0.75rem;
-      padding-bottom: 0.75rem;
+      padding-top: var(--space-3);
+      padding-bottom: var(--space-3);
     }
   }
 
@@ -135,7 +135,7 @@ export const Layout = styled.div`
   .workspace:-webkit-full-screen,
   .workspace.is-fullscreen {
     height: 100dvh;
-    padding: calc(env(safe-area-inset-top, 0px) + 0.75rem) 0.75rem 0.75rem;
+    padding: calc(env(safe-area-inset-top, 0px) + var(--space-3)) var(--space-3) var(--space-3);
     background: var(--color-background);
   }
 
@@ -152,10 +152,10 @@ export const Layout = styled.div`
 
   .notice {
     position: absolute;
-    bottom: 1rem;
-    left: 1rem;
-    right: 1rem;
-    padding: 0.5rem 0.75rem;
+    bottom: var(--space-4);
+    left: var(--space-4);
+    right: var(--space-4);
+    padding: var(--space-2) var(--space-3);
     background: var(--color-surface);
     border-radius: var(--border-radius-sm);
     font-size: var(--font-size-small);
@@ -168,9 +168,9 @@ export const Layout = styled.div`
   aside {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: var(--space-6);
     overflow-y: auto;
-    padding-right: 0.25rem;
+    padding-right: var(--space-1);
   }
 
   /* A phone: the map, then the pins and the plan, in the page's own scroll.
@@ -180,7 +180,7 @@ export const Layout = styled.div`
   @media (max-width: 52em) {
     /* The start page keeps the suite's gutter, on the masthead's edge. */
     main {
-      padding: 0 ${(props) => (props.$start ? "var(--start-inset)" : "0.5rem")};
+      padding: 0 ${(props) => (props.$start ? "var(--start-inset)" : "var(--space-2)")};
     }
 
     .workspace {
@@ -188,7 +188,7 @@ export const Layout = styled.div`
       grid-template-rows: auto;
       height: auto;
       min-height: 0;
-      gap: 0.75rem;
+      gap: var(--space-3);
     }
 
     .map {

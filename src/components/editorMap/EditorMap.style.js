@@ -21,19 +21,19 @@ const style = (Component) => styled(Component)`
   overflow: hidden;
 
   .missing {
-    padding: 2rem;
+    padding: var(--space-8);
     font-size: var(--font-size-small);
     color: var(--color-text-muted);
   }
 
   .controls {
     position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
+    top: var(--space-3);
+    right: var(--space-3);
     z-index: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-2);
   }
 
   .control {
@@ -120,8 +120,8 @@ const style = (Component) => styled(Component)`
   .candidate {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem 0.5rem;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
     font-size: var(--font-size-tiny);
     background: ${MAP_COLORS.pin};
     border: 2px solid ${MAP_COLORS.casing};

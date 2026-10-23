@@ -6,7 +6,7 @@ import { eyebrow } from "../../theme/type.js";
 const style = (Component) => styled(Component)`
   h2 {
     ${eyebrow}
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-2);
   }
 
   h2 small {
@@ -16,13 +16,13 @@ const style = (Component) => styled(Component)`
   }
 
   .pace {
-    margin-bottom: 0.75rem;
+    margin-bottom: var(--space-3);
   }
 
   .pace label {
     display: flex;
     flex-direction: column;
-    gap: 0.125rem;
+    gap: var(--space-hair);
     width: 10rem;
     font-size: var(--font-size-tiny);
     color: var(--color-text-muted);
@@ -33,13 +33,13 @@ const style = (Component) => styled(Component)`
   }
 
   .pace p {
-    margin-top: 0.25rem;
+    margin-top: var(--space-1);
     font-size: var(--font-size-tiny);
     color: var(--color-text-muted);
   }
 
   .summary {
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-2);
     font-size: var(--font-size-small);
   }
 
@@ -50,7 +50,7 @@ const style = (Component) => styled(Component)`
   .fold-toggle {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: var(--space-1);
     min-height: 44px;
     padding: 0;
     background: none;
@@ -79,14 +79,14 @@ const style = (Component) => styled(Component)`
 
   table {
     width: 100%;
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-4);
     border-collapse: collapse;
     font-size: var(--font-size-tiny);
   }
 
   th,
   td {
-    padding: 0.25rem 0.375rem;
+    padding: var(--space-1) var(--space-2);
     text-align: right;
     font-weight: var(--font-weight-medium);
   }

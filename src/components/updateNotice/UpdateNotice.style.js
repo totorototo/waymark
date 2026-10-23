@@ -6,7 +6,7 @@ import { chip } from "../../theme/controls.js";
 const style = (Component) => styled(Component)`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   font-size: var(--font-size-tiny);
   color: var(--color-secondary-text);
 

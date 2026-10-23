@@ -10,6 +10,7 @@ const GlobalStyle = createGlobalStyle`
     ${(props) => toCustomProperties(props.theme.transitions)}
     ${(props) => toCustomProperties(props.theme.zIndex)}
     ${(props) => toCustomProperties(props.theme.layout)}
+    ${(props) => toCustomProperties(props.theme.space)}
 
     color-scheme: ${(props) => props.theme.currentVariant};
     font-family: var(--font-family-sansSerif);

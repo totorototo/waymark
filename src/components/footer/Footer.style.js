@@ -5,7 +5,7 @@ import styled from "styled-components";
 // floor for small text on the flat background.
 const style = (Component) => styled(Component)`
   display: block;
-  padding: 3rem var(--gutter) calc(env(safe-area-inset-bottom, 0px) + 2.5rem);
+  padding: var(--space-12) var(--gutter) calc(env(safe-area-inset-bottom, 0px) + var(--space-10));
   text-align: center;
   font-family: var(--font-family-mono);
   font-size: 0.6875rem;

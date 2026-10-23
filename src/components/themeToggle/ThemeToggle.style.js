@@ -5,8 +5,8 @@ import styled from "styled-components";
 // about 3:1 non-text contrast against the background (WCAG 1.4.11).
 const style = (Component) => styled(Component)`
   position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 1.25rem);
-  right: calc(env(safe-area-inset-right, 0px) + 1.25rem);
+  top: calc(env(safe-area-inset-top, 0px) + var(--space-5));
+  right: calc(env(safe-area-inset-right, 0px) + var(--space-5));
   z-index: var(--z-index-overlay);
   display: flex;
   align-items: center;
@@ -24,7 +24,7 @@ const style = (Component) => styled(Component)`
      instead of sitting on the map's controls. */
   @media (max-width: 52em) {
     position: absolute;
-    right: calc(env(safe-area-inset-right, 0px) + 1rem);
+    right: calc(env(safe-area-inset-right, 0px) + var(--space-4));
   }
 
   &:hover {

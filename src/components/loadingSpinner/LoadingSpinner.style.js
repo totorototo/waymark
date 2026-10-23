@@ -13,8 +13,8 @@ const style = (Component) => styled(Component)`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  padding: 3rem 0;
+  gap: var(--space-4);
+  padding: var(--space-12) 0;
 
   .spinner {
     width: 48px;
