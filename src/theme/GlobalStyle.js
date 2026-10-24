@@ -28,13 +28,32 @@ const GlobalStyle = createGlobalStyle`
     padding: 0;
   }
 
+  /* Terminus's scroll model: the document is the window, never taller, and the body
+     scrolls inside it, only when the page is. why: a root that scrolls shows a full-height
+     scroll bar on a phone, and 100vh (taller than the screen under the URL bar) plus the
+     safe-area padding made every page scroll a few px. */
+  html {
+    height: 100%;
+    overflow: hidden;
+  }
+
   body {
-    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
     min-width: 320px;
     background-color: var(--color-background);
     padding:
       env(safe-area-inset-top) env(safe-area-inset-right)
       env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  #root {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
   }
 
   :focus-visible {

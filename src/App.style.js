@@ -5,8 +5,8 @@ import { eyebrow } from "./theme/type.js";
 
 export const Layout = styled.div`
   display: flex;
+  flex: 1;
   flex-direction: column;
-  min-height: 100vh;
   outline: ${(props) => (props.$dragging ? "3px dashed var(--color-primary)" : "none")};
   outline-offset: -6px;
   /* The start page's column: the measure, centred, never closer to the edge than the gutter.
